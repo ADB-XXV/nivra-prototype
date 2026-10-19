@@ -1,67 +1,104 @@
-:root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --bg: #f8fafc;
-  --card-bg: #ffffff;
-  --text: #0f172a;
-  --border: #e2e8f0;
+/* src/styles/globals.css
+   Nivra global styles. Everything is scoped under .nv, so wrap each page in
+   <div className="nv"> and nothing leaks into other parts of your app.
+   Import once per page: import "../styles/globals.css"; */
+
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap");
+
+.nv {
+  /* Palette */
+  --pri: #593c42;
+  --sec: #a8b89a;
+  --ter: #d6a5a5;
+  --bg: #faf5f0;
+  /* Surfaces and text */
+  --sf: #ffffff;
+  --ln: #e7ddd3;
+  --tx: #2d2124;
+  --mu: #7b6b6e;
+  --sd: #56694b;
+  --tl: #f4e3e1;
+  --sl: #e9efe3;
+  --btn: #593c42;
+  --btx: #ffffff;
+  --er: #a23b3b;
+
+  background: var(--bg);
+  color: var(--tx);
+  min-height: 100vh;
+  font: 15px/1.5 "DM Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  .nv {
+    --bg: #1d1517; --sf: #2a2023; --ln: #43353a; --tx: #f3ebe6; --mu: #b5a5a8;
+    --sd: #b9c9ab; --tl: #3b2a2e; --sl: #2f3829; --btn: #d6a5a5; --btx: #2d2124; --er: #e58b8b;
+  }
 }
 
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--bg);
-  color: var(--text);
-}
+.nv * { box-sizing: border-box; }
+.nv h1, .nv h2, .nv h3 { margin: 0 0 0.5rem; line-height: 1.2; }
+.nv h1 { font-size: 2.3rem; }
+.nv h2 { font-size: 1.35rem; }
+.nv h3 { font-size: 1rem; }
+.nv p { margin: 0 0 0.75rem; }
 
-.navbar {
-  display: flex;
-  gap: 12px;
-  padding: 16px;
-  background: #ffffff;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-}
+/* Layout helpers */
+.nv .w { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.nv .mu { color: var(--mu); }
+.nv .ok { color: var(--sd); }
+.nv .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.nv .sp { justify-content: space-between; }
+.nv .f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.nv .e2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
-.nav-link {
-  text-decoration: none;
-  color: var(--text);
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-}
+/* Navbar */
+.nv .top { background: var(--sf); border-bottom: 1px solid var(--ln); position: sticky; top: 0; z-index: 5; }
+.nv .top .w { display: flex; align-items: center; gap: 20px; height: 56px; }
+.nv .logo { font-weight: 700; font-size: 1.25rem; color: var(--btn); background: none; border: 0; font-family: inherit; padding: 0; cursor: pointer; letter-spacing: -0.02em; }
+.nv .logo i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ter); margin-left: 2px; }
+.nv .links { display: flex; gap: 2px; flex: 1; overflow-x: auto; }
+.nv .links a { padding: 6px 10px; border-radius: 6px; color: var(--mu); font-weight: 500; cursor: pointer; white-space: nowrap; }
+.nv .links a.on { background: var(--tl); color: var(--tx); }
+.nv .tag { font-size: 0.72rem; background: var(--sl); color: var(--sd); padding: 2px 8px; border-radius: 4px; font-weight: 700; white-space: nowrap; }
 
-.nav-link:hover, .nav-link.active {
-  background-color: var(--primary);
-  color: #ffffff;
-}
+/* Footer */
+.nv .foot { border-top: 1px solid var(--ln); padding: 22px 0; font-size: 0.85rem; color: var(--mu); margin-top: 40px; }
 
-.container {
-  max-width: 900px;
-  margin: 32px auto;
-  padding: 0 16px;
-}
+/* Buttons */
+.nv .btn { background: var(--btn); color: var(--btx); border: 1px solid var(--btn); padding: 9px 16px; border-radius: 6px; font: inherit; font-weight: 500; cursor: pointer; display: inline-block; }
+.nv .btn.s { background: transparent; color: var(--tx); border-color: var(--ln); }
+.nv .btn.g { background: none; border-color: transparent; color: var(--sd); padding: 6px 8px; }
+.nv .btn.sm { padding: 5px 10px; font-size: 0.85rem; }
+.nv .btn:focus-visible, .nv input:focus-visible, .nv select:focus-visible { outline: 2px solid var(--sec); outline-offset: 2px; }
 
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
+/* Forms */
+.nv input, .nv select, .nv textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--ln); border-radius: 6px; background: var(--sf); color: var(--tx); font: inherit; }
+.nv input.bad { border-color: var(--er); }
+.nv label { display: block; font-weight: 500; font-size: 0.88rem; margin: 12px 0 4px; }
+.nv .err { color: var(--er); display: block; margin-top: 3px; font-size: 0.85rem; }
+.nv .hint { color: var(--mu); font-size: 0.85rem; }
 
-.btn {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
+/* Surfaces, chips, job rows */
+.nv .box { background: var(--sf); border: 1px solid var(--ln); border-radius: 8px; padding: 20px; }
+.nv .ch { display: inline-block; padding: 3px 10px; border: 1px solid var(--ln); border-radius: 5px; margin: 0 6px 6px 0; font: inherit; font-size: 0.85rem; background: var(--sf); color: var(--tx); cursor: pointer; }
+.nv .ch.on { background: var(--tl); border-color: var(--ter); }
+.nv .jr { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--ln); align-items: center; }
+.nv .jr:last-child { border: 0; }
+.nv .jr .m { flex: 1; min-width: 0; }
+.nv .jr b a { cursor: pointer; }
+.nv .jr b a:hover { text-decoration: underline; }
+.nv .pay { font-weight: 700; white-space: nowrap; }
+.nv .pay small { font-weight: 400; color: var(--mu); }
 
-.btn:hover {
-  background: var(--primary-hover);
+/* Landing page sections */
+.nv .hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 36px; align-items: center; padding: 48px 0 36px; }
+.nv .band { background: var(--sl); padding: 28px 0; margin-top: 30px; }
+.nv .step { display: flex; gap: 10px; margin-bottom: 10px; }
+.nv .step b { width: 24px; height: 24px; border-radius: 50%; background: var(--ter); color: #2d2124; display: grid; place-items: center; font-size: 0.8rem; flex: none; }
+
+@media (max-width: 760px) {
+  .nv .hero, .nv .e2, .nv .f2 { grid-template-columns: 1fr; }
+  .nv h1 { font-size: 1.8rem; }
+  .nv .jr { flex-wrap: wrap; }
+  .nv .top .w { gap: 10px; }
 }
