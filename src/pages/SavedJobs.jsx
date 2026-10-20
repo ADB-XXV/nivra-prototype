@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 
 const INITIAL_JOBS = [
@@ -6,7 +8,13 @@ const INITIAL_JOBS = [
   { id: 3, title: "Delivery Partner", company: "QuickBasket", city: "Bengaluru", schedule: "Sat, 31 Oct · 10:00 am – 6:00 pm · One day", pay: 850 },
 ];
 
-const NAV = ["Browse jobs", "Saved", "My applications", "Dashboard", "Profile"];
+const NAV = [
+  ["Browse jobs", "/jobs"],
+  ["Saved", "/saved"],
+  ["My applications", "/applications"],
+  ["Dashboard", "/student/dashboard"],
+  ["Profile", "/student/profile"],
+];
 
 const CSS = `
 .nv-root {
@@ -110,7 +118,7 @@ const CSS = `
 }
 `;
 
-export default function SavedJobs({ onNavigate }) {
+export default function SavedJobs({ onNavigate = (path) => window.location.assign(path) }) {
   const [jobs, setJobs] = useState(INITIAL_JOBS);
   const [applied, setApplied] = useState([]);
 
@@ -127,15 +135,15 @@ export default function SavedJobs({ onNavigate }) {
             Nivra<span className="nv-logo-dot" />
           </span>
           <nav className="nv-nav" aria-label="Main">
-            {NAV.map((item) => (
+            {NAV.map(([item, path]) => (
               <a
-                key={item}
-                href="#"
-                className={item === "Saved" ? "active" : ""}
-                aria-current={item === "Saved" ? "page" : undefined}
+                key={path}
+                href={path}
+                className={path === "/saved" ? "active" : ""}
+                aria-current={path === "/saved" ? "page" : undefined}
                 onClick={(e) => {
                   e.preventDefault();
-                  onNavigate?.(item);
+                  onNavigate(path);
                 }}
               >
                 {item}
@@ -144,7 +152,10 @@ export default function SavedJobs({ onNavigate }) {
           </nav>
           <div className="nv-right">
             <span className="nv-role">Student</span>
-            <a href="#" className="nv-logout" onClick={(e) => e.preventDefault()}>
+            <a href="/" className="nv-logout" onClick={(e) => {
+              e.preventDefault();
+              onNavigate("/");
+            }}>
               Log out
             </a>
           </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 
 const INITIAL_APPLICATIONS = [
@@ -11,7 +13,13 @@ const INITIAL_APPLICATIONS = [
 
 const FILTERS = ["All", "Applied", "Under Review", "Shortlisted", "Accepted", "Rejected", "Completed"];
 const WITHDRAWABLE = ["Applied", "Under Review"];
-const NAV = ["Browse jobs", "Saved", "My applications", "Dashboard", "Profile"];
+const NAV = [
+  ["Browse jobs", "/jobs"],
+  ["Saved", "/saved"],
+  ["My applications", "/applications"],
+  ["Dashboard", "/student/dashboard"],
+  ["Profile", "/student/profile"],
+];
 
 const CSS = `
 .nv-root {
@@ -129,7 +137,7 @@ const CSS = `
 
 const slug = (s) => s.toLowerCase().replace(/\s+/g, "-");
 
-export default function MyApplications({ onNavigate }) {
+export default function MyApplications({ onNavigate = (path) => window.location.assign(path) }) {
   const [applications, setApplications] = useState(INITIAL_APPLICATIONS);
   const [filter, setFilter] = useState("All");
 
@@ -151,15 +159,15 @@ export default function MyApplications({ onNavigate }) {
             Nivra<span className="nv-logo-dot" />
           </span>
           <nav className="nv-nav" aria-label="Main">
-            {NAV.map((item) => (
+            {NAV.map(([item, path]) => (
               <a
-                key={item}
-                href="#"
-                className={item === "My applications" ? "active" : ""}
-                aria-current={item === "My applications" ? "page" : undefined}
+                key={path}
+                href={path}
+                className={path === "/applications" ? "active" : ""}
+                aria-current={path === "/applications" ? "page" : undefined}
                 onClick={(e) => {
                   e.preventDefault();
-                  onNavigate?.(item);
+                  onNavigate(path);
                 }}
               >
                 {item}
@@ -168,7 +176,10 @@ export default function MyApplications({ onNavigate }) {
           </nav>
           <div className="nv-right">
             <span className="nv-role">Student</span>
-            <a href="#" className="nv-logout" onClick={(e) => e.preventDefault()}>
+            <a href="/" className="nv-logout" onClick={(e) => {
+              e.preventDefault();
+              onNavigate("/");
+            }}>
               Log out
             </a>
           </div>
