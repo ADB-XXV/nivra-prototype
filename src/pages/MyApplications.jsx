@@ -3,18 +3,18 @@
 import { useState } from "react";
 
 const INITIAL_APPLICATIONS = [
-  { id: 1, title: "Event Assistant", company: "Malabar Events", city: "Kozhikode", schedule: "Sat, 24 Oct · 9:00 am – 5:00 pm · One day", pay: 800, applied: "16 Oct", status: "Under Review" },
-  { id: 2, title: "Catering Helper", company: "Spice Route Caterers", city: "Kochi", schedule: "Sun, 25 Oct · 11:00 am – 4:00 pm · One day", pay: 700, applied: "12 Oct", status: "Accepted" },
-  { id: 3, title: "Campus Event Crew", company: "Aarambh Fest Team", city: "Kozhikode", schedule: "Mon, 26 Oct · 8:00 am – 6:00 pm · One day", pay: 600, applied: "14 Oct", status: "Shortlisted" },
-  { id: 4, title: "Retail Promoter", company: "Urban Cart Stores", city: "Thrissur", schedule: "Fri, 23 – Sun, 25 Oct · 10:00 am – 6:00 pm · Short term", pay: 900, applied: "18 Oct", status: "Applied" },
-  { id: 5, title: "Maths Tutor, Class 10", company: "BrightPath Tuitions", city: "Malappuram", schedule: "Wed, 28 Oct · 5:00 pm – 7:00 pm · One day", pay: 500, applied: "3 Oct", status: "Completed" },
-  { id: 6, title: "Banquet Server", company: "Hotel Lakeview", city: "Kochi", schedule: "Sat, 31 Oct · 6:00 pm – 11:00 pm · Short term", pay: 650, applied: "9 Oct", status: "Rejected" },
+  { id: 1, jobId: 1, title: "Event Assistant", company: "Malabar Events", city: "Kozhikode", schedule: "Sat, 24 Oct · 9:00 am – 5:00 pm · One day", pay: 800, applied: "16 Oct", status: "Under Review" },
+  { id: 2, jobId: 2, title: "Catering Helper", company: "Spice Route Caterers", city: "Kochi", schedule: "Sun, 25 Oct · 11:00 am – 4:00 pm · One day", pay: 700, applied: "12 Oct", status: "Accepted" },
+  { id: 3, jobId: 4, title: "Campus Event Crew", company: "Aarambh Fest Team", city: "Kozhikode", schedule: "Mon, 26 Oct · 8:00 am – 6:00 pm · One day", pay: 600, applied: "14 Oct", status: "Shortlisted" },
+  { id: 4, jobId: 3, title: "Retail Promoter", company: "Urban Cart Stores", city: "Thrissur", schedule: "Fri, 23 – Sun, 25 Oct · 10:00 am – 6:00 pm · Short term", pay: 900, applied: "18 Oct", status: "Applied" },
+  { id: 5, jobId: 5, title: "Maths Tutor, Class 10", company: "BrightPath Tuitions", city: "Malappuram", schedule: "Wed, 28 Oct · 5:00 pm – 7:00 pm · One day", pay: 500, applied: "3 Oct", status: "Completed" },
+  { id: 6, jobId: 7, title: "Banquet Server", company: "Hotel Lakeview", city: "Kochi", schedule: "Sat, 31 Oct · 6:00 pm – 11:00 pm · Short term", pay: 650, applied: "9 Oct", status: "Rejected" },
 ];
 
 const FILTERS = ["All", "Applied", "Under Review", "Shortlisted", "Accepted", "Rejected", "Completed"];
 const WITHDRAWABLE = ["Applied", "Under Review"];
 const NAV = [
-  ["Browse jobs", "/jobs"],
+  ["Browse jobs", "/browsejobs"],
   ["Saved", "/saved"],
   ["My applications", "/applications"],
   ["Dashboard", "/student/dashboard"],
@@ -224,7 +224,7 @@ export default function MyApplications({ onNavigate = (path) => window.location.
                 </span>
                 <span className="nv-applied">Applied {a.applied}</span>
                 <span className={`nv-badge ${slug(a.status)}`}>{a.status}</span>
-                <button type="button" className="nv-btn">
+                <button type="button" className="nv-btn" onClick={() => onNavigate(`/jobdetails/${a.jobId}?returnTo=applications`)}>
                   View job
                 </button>
                 {WITHDRAWABLE.includes(a.status) ? (
