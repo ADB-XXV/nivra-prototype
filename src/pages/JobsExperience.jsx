@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Footer from "../components/Footer";
-import Navbar from "../components/Navbar";
 import JOBS from "../data/jobs";
 import BrowseJobs from "./BrowseJobs";
 import JobDetails from "./JobDetails";
@@ -11,7 +9,7 @@ import JobDetails from "./JobDetails";
 function JobsExperience({ initialJobId = null }) {
   const router = useRouter();
   const initialJob = JOBS.find((job) => job.id === Number(initialJobId));
-  const [selectedJob, setSelectedJob] = useState(initialJob || null);
+  const selectedJob = initialJob || null;
   const [savedJobs, setSavedJobs] = useState([6]);
   const [appliedJobs, setAppliedJobs] = useState([]);
 
@@ -24,17 +22,11 @@ function JobsExperience({ initialJobId = null }) {
   }
 
   function goBackToJobs() {
-    if (initialJob) {
-      router.push("/jobs");
-      return;
-    }
-
-    setSelectedJob(null);
+    router.push("/jobs");
   }
 
   return (
     <div className="nv">
-      <Navbar role="public" active="/jobs" />
       {selectedJob ? (
         <JobDetails
           job={selectedJob}
@@ -47,13 +39,12 @@ function JobsExperience({ initialJobId = null }) {
       ) : (
         <BrowseJobs
           jobs={JOBS}
-          onView={setSelectedJob}
+          onView={(job) => router.push(`/jobs/${job.id}`)}
           savedJobs={savedJobs}
           toggleSaved={toggleSaved}
           activeTab="Browse jobs"
         />
       )}
-      <Footer />
     </div>
   );
 }
