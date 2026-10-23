@@ -61,7 +61,7 @@ export default function BrowseJobs({
           <nav className="nav">
             <a href="/browsejobs" className={activeTab === "Browse jobs" ? "active" : ""}>Browse jobs</a>
             <a href="#/saved">Saved</a>
-            <a href="#/applications">My applications</a>
+            <a href="/applications">My applications</a>
             <a href="#/dashboard">Dashboard</a>
             <a href="#/profile">Profile</a>
           </nav>
