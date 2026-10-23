@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import JOBS from "../data/jobs";
 
 /* =====================================================================
@@ -12,7 +12,7 @@ const jobDays = (job) => (job.dateLabel.match(/\d+/g) || []).map(Number);
 /* ---------- Page ---------- */
 export default function BrowseJobs({
   jobs: availableJobs = JOBS,
-  onView = () => {},
+  onView = (job) => window.location.assign(`/jobdetails/${job.id}`),
   savedJobs = [],
   toggleSaved = () => {},
   activeTab = "Browse jobs",
@@ -50,9 +50,6 @@ export default function BrowseJobs({
   return (
     <div className="nivra">
       <style>{css}</style>
-
-      {/* Prototype bar */}
-      <div className="protobar">Nivra · 03 / 16 · Browse jobs</div>
 
       {/* Header */}
       <header className="header">

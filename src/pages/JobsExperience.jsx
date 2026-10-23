@@ -6,7 +6,7 @@ import JOBS from "../data/jobs";
 import BrowseJobs from "./BrowseJobs";
 import JobDetails from "./JobDetails";
 
-function JobsExperience({ initialJobId = null }) {
+function JobsExperience({ initialJobId = null, initialBackPath = "/browsejobs" }) {
   const router = useRouter();
   const initialJob = JOBS.find((job) => job.id === Number(initialJobId));
   const selectedJob = initialJob || null;
@@ -22,7 +22,7 @@ function JobsExperience({ initialJobId = null }) {
   }
 
   function goBackToJobs() {
-    router.push("/browsejobs");
+    router.push(initialBackPath);
   }
 
   return (
@@ -31,6 +31,7 @@ function JobsExperience({ initialJobId = null }) {
         <JobDetails
           job={selectedJob}
           onBack={goBackToJobs}
+          backHref={initialBackPath}
           savedJobs={savedJobs}
           toggleSaved={toggleSaved}
           appliedJobs={appliedJobs}

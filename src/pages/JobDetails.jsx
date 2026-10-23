@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 /* =====================================================================
    Nivra · Page 4 of 16 · Job details and apply
@@ -80,7 +80,11 @@ const load = (key, fallback) => {
   }
 };
 const persist = (key, set) => {
-  try { localStorage.setItem(key, JSON.stringify([...set])); } catch { }
+  try {
+    localStorage.setItem(key, JSON.stringify([...set]));
+  } catch (error) {
+    console.error(`Unable to persist ${key}`, error);
+  }
 };
 
 /* ---------- Read the job id from the hash ---------- */
@@ -93,6 +97,7 @@ const idFromHash = () => {
 export default function JobDetail({
   job: selectedJob,
   onBack,
+  backHref = "/browsejobs",
   savedJobs,
   toggleSaved,
   appliedJobs,
@@ -149,9 +154,6 @@ export default function JobDetail({
     <div className="nivra">
       <style>{css}</style>
 
-      {/* Prototype bar */}
-      <div className="protobar">Nivra · 04 / 16 · Job details and apply</div>
-
       {/* Header */}
       <header className="header">
         <div className="header-inner">
@@ -173,7 +175,7 @@ export default function JobDetail({
       <main>
         <a
           className="back"
-          href="/browsejobs"
+          href={backHref}
           onClick={onBack ? (event) => {
             event.preventDefault();
             onBack();
