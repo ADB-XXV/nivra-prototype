@@ -59,7 +59,7 @@ export default function BrowseJobs({
         <div className="header-inner">
           <a className="logo" href="/">Nivra<i /></a>
           <nav className="nav">
-            <a href="/jobs" className={activeTab === "Browse jobs" ? "active" : ""}>Browse jobs</a>
+            <a href="/browsejobs" className={activeTab === "Browse jobs" ? "active" : ""}>Browse jobs</a>
             <a href="#/saved">Saved</a>
             <a href="#/applications">My applications</a>
             <a href="#/dashboard">Dashboard</a>

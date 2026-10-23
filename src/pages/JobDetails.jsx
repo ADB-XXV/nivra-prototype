@@ -8,48 +8,62 @@ import React, { useEffect, useState } from "react";
 
 /* ---------- Sample data ---------- */
 const JOBS = [
-  { id: 1, title: "Event Assistant", company: "Malabar Events", city: "Kozhikode", category: "Events", pay: 800,
+  {
+    id: 1, title: "Event Assistant", company: "Malabar Events", city: "Kozhikode", category: "Events", pay: 800,
     when: "Sat, 24 Oct", time: "9:00 am – 5:00 pm", workers: 8,
     about: "Help the team run the day smoothly. You will be briefed on arrival and work alongside an on-site supervisor.",
     resp: ["Welcome and guide people on site", "Help with setup and pack-down", "Follow the supervisor’s instructions"],
     skills: "Clear communication, punctuality, comfort standing for long hours. Malayalam and English preferred.",
-    elig: "18 or older. College ID required. No experience needed." },
-  { id: 2, title: "Catering Helper", company: "Spice Route Caterers", city: "Kochi", category: "Catering", pay: 700,
+    elig: "18 or older. College ID required. No experience needed."
+  },
+  {
+    id: 2, title: "Catering Helper", company: "Spice Route Caterers", city: "Kochi", category: "Catering", pay: 700,
     when: "Sun, 25 Oct", time: "11:00 am – 4:00 pm", workers: 6,
     about: "Assist the catering crew with serving and clean-up at a family function.",
     resp: ["Set up serving counters", "Serve guests politely", "Help with clean-up"],
     skills: "Teamwork, neat appearance, willingness to be on your feet.",
-    elig: "18 or older. College ID required. No experience needed." },
-  { id: 3, title: "Retail Promoter", company: "Urban Cart Stores", city: "Thrissur", category: "Retail", pay: 900,
+    elig: "18 or older. College ID required. No experience needed."
+  },
+  {
+    id: 3, title: "Retail Promoter", company: "Urban Cart Stores", city: "Thrissur", category: "Retail", pay: 900,
     when: "Fri, 23 – Sun, 25 Oct", time: "10:00 am – 6:00 pm", workers: 5,
     about: "Help the team run the day smoothly. You will be briefed on arrival and work alongside an on-site supervisor.",
     resp: ["Welcome and guide people on site", "Help with setup and pack-down", "Follow the supervisor’s instructions"],
     skills: "Clear communication, punctuality, comfort standing for long hours. Malayalam and English preferred.",
-    elig: "18 or older. College ID required. No experience needed." },
-  { id: 4, title: "Campus Event Crew", company: "Aarambh Fest Team", city: "Kozhikode", category: "Events", pay: 600,
+    elig: "18 or older. College ID required. No experience needed."
+  },
+  {
+    id: 4, title: "Campus Event Crew", company: "Aarambh Fest Team", city: "Kozhikode", category: "Events", pay: 600,
     when: "Mon, 26 Oct", time: "8:00 am – 6:00 pm", workers: 12,
     about: "Join the student crew handling logistics for the annual campus fest.",
     resp: ["Manage registration desks", "Move and arrange equipment", "Support stage volunteers"],
     skills: "Energy, teamwork, basic communication.",
-    elig: "18 or older. College ID required. No experience needed." },
-  { id: 5, title: "Maths Tutor, Class 10", company: "BrightPath Tuitions", city: "Malappuram", category: "Tutoring", pay: 500,
+    elig: "18 or older. College ID required. No experience needed."
+  },
+  {
+    id: 5, title: "Maths Tutor, Class 10", company: "BrightPath Tuitions", city: "Malappuram", category: "Tutoring", pay: 500,
     when: "Wed, 28 Oct", time: "5:00 pm – 7:00 pm", workers: 2,
     about: "Take a revision session for Class 10 students ahead of the model exams.",
     resp: ["Revise key chapters", "Solve practice problems with students", "Clear doubts"],
     skills: "Strong maths fundamentals, patience, clear explanations.",
-    elig: "18 or older. College ID required. Strong Class 10 maths." },
-  { id: 6, title: "Delivery Partner", company: "QuickBasket", city: "Bengaluru", category: "Delivery", pay: 850,
+    elig: "18 or older. College ID required. Strong Class 10 maths."
+  },
+  {
+    id: 6, title: "Delivery Partner", company: "QuickBasket", city: "Bengaluru", category: "Delivery", pay: 850,
     when: "Sat, 31 Oct", time: "10:00 am – 6:00 pm", workers: 10,
     about: "Deliver grocery orders in your assigned zone during a busy weekend slot.",
     resp: ["Pick up orders from the store", "Deliver to customers on time", "Confirm delivery in the app"],
     skills: "Knowledge of local roads, punctuality, own two-wheeler preferred.",
-    elig: "18 or older. College ID and valid licence required." },
-  { id: 7, title: "Banquet Server", company: "Hotel Lakeview", city: "Kochi", category: "Hospitality", pay: 650,
+    elig: "18 or older. College ID and valid licence required."
+  },
+  {
+    id: 7, title: "Banquet Server", company: "Hotel Lakeview", city: "Kochi", category: "Hospitality", pay: 650,
     when: "Sat, 31 Oct", time: "6:00 pm – 11:00 pm", workers: 8,
     about: "Serve guests at an evening banquet under the guidance of the banquet captain.",
     resp: ["Set tables", "Serve food and beverages", "Assist with end-of-night clean-up"],
     skills: "Courtesy, neat appearance, ability to work in a fast-paced setting.",
-    elig: "18 or older. College ID required. No experience needed." },
+    elig: "18 or older. College ID required. No experience needed."
+  },
 ];
 
 const rupee = (n) => "₹" + n.toLocaleString("en-IN");
@@ -66,7 +80,7 @@ const load = (key, fallback) => {
   }
 };
 const persist = (key, set) => {
-  try { localStorage.setItem(key, JSON.stringify([...set])); } catch {}
+  try { localStorage.setItem(key, JSON.stringify([...set])); } catch { }
 };
 
 /* ---------- Read the job id from the hash ---------- */
@@ -101,13 +115,13 @@ export default function JobDetail({
   const routeJob = JOBS.find((j) => j.id === jobId);
   const job = selectedJob
     ? {
-        ...selectedJob,
-        city: selectedJob.location,
-        when: selectedJob.dateLabel,
-        about: selectedJob.description,
-        resp: selectedJob.responsibilities,
-        elig: selectedJob.eligibility,
-      }
+      ...selectedJob,
+      city: selectedJob.location,
+      when: selectedJob.dateLabel,
+      about: selectedJob.description,
+      resp: selectedJob.responsibilities,
+      elig: selectedJob.eligibility,
+    }
     : routeJob;
   const isSaved = job && savedJobs
     ? savedJobs.includes(job.id)
@@ -120,15 +134,15 @@ export default function JobDetail({
     toggleSaved
       ? toggleSaved(job.id)
       : setSaved((prev) => {
-          const next = new Set(prev);
-          next.has(jobId) ? next.delete(jobId) : next.add(jobId);
-          return next;
-        });
+        const next = new Set(prev);
+        next.has(jobId) ? next.delete(jobId) : next.add(jobId);
+        return next;
+      });
   const apply = () =>
     setAppliedJobs
       ? setAppliedJobs((previous) =>
-          previous.includes(job.id) ? previous : [...previous, job.id]
-        )
+        previous.includes(job.id) ? previous : [...previous, job.id]
+      )
       : setApplied((previous) => new Set(previous).add(jobId));
 
   return (
@@ -143,7 +157,7 @@ export default function JobDetail({
         <div className="header-inner">
           <a className="logo" href="/">Nivra<i /></a>
           <nav className="nav">
-            <a href="/jobs">Browse jobs</a>
+            <a href="/browsejobs">Browse jobs</a>
             <a href="#/saved">Saved</a>
             <a href="#/applications">My applications</a>
             <a href="#/dashboard">Dashboard</a>
@@ -159,7 +173,7 @@ export default function JobDetail({
       <main>
         <a
           className="back"
-          href="/jobs"
+          href="/browsejobs"
           onClick={onBack ? (event) => {
             event.preventDefault();
             onBack();

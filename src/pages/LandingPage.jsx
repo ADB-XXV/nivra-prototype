@@ -35,11 +35,11 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
   const [city, setCity] = useState("");
   const [saved, setSaved] = useState([6]);
 
-  const viewJob = (id) => onNavigate(`/jobs/${id}`);
+  const viewJob = (id) => onNavigate(`/jobdetails/${id}`);
   const toggleSave = (id) => setSaved((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   const search = (e) => {
     e.preventDefault();
-    onNavigate(`/jobs?q=${encodeURIComponent(title)}&loc=${encodeURIComponent(city)}`);
+    onNavigate(`/browsejobs?q=${encodeURIComponent(title)}&loc=${encodeURIComponent(city)}`);
   };
 
   return (
@@ -68,7 +68,7 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
               <div className="row" style={{ marginTop: 12 }}>
                 <button type="submit" className="btn">Search jobs</button>
                 <button type="button" className="btn s" onClick={() => onNavigate("/login?role=employer&mode=signup")}>Hire workers</button>
-                <button type="button" className="btn g" onClick={() => onNavigate("/jobs")}>Find jobs →</button>
+                <button type="button" className="btn g" onClick={() => onNavigate("/browsejobs")}>Find jobs →</button>
               </div>
             </form>
           </div>
@@ -81,7 +81,7 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
         <section className="w">
           <h2>Browse by category</h2>
           {CATEGORIES.map((c) => (
-            <button key={c} className="ch" onClick={() => onNavigate(`/jobs?category=${encodeURIComponent(c)}`)}>{c}</button>
+            <button key={c} className="ch" onClick={() => onNavigate(`/browsejobs?category=${encodeURIComponent(c)}`)}>{c}</button>
           ))}
         </section>
 

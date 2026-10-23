@@ -22,7 +22,7 @@ function JobsExperience({ initialJobId = null }) {
   }
 
   function goBackToJobs() {
-    router.push("/jobs");
+    router.push("/browsejobs");
   }
 
   return (
@@ -39,7 +39,7 @@ function JobsExperience({ initialJobId = null }) {
       ) : (
         <BrowseJobs
           jobs={JOBS}
-          onView={(job) => router.push(`/jobs/${job.id}`)}
+          onView={(job) => router.push(`/jobdetails/${job.id}`)}
           savedJobs={savedJobs}
           toggleSaved={toggleSaved}
           activeTab="Browse jobs"
