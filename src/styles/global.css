@@ -102,3 +102,182 @@
   .nv .jr { flex-wrap: wrap; }
   .nv .top .w { gap: 10px; }
 }
+
+/*Employer profile*/
+
+/* Employer profile spacing */
+
+
+/* Employer Profile */
+
+
+/* Employer Profile - compact target layout */
+
+.nv.employer-profile {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Center and limit the profile content */
+.nv.employer-profile main.w {
+  max-width: 760px;
+  padding: 24px 12px 0;
+}
+
+/* Company header */
+/* Remove the white box around the company header */
+.nv.employer-profile .employer-company-header {
+  padding: 0;
+  margin-bottom: 16px !important;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.nv.employer-profile .employer-company-header > .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.nv.employer-profile .employer-company-header h2 {
+  font-size: 28px;
+  margin-bottom: 2px;
+}
+
+.nv.employer-profile .employer-company-header p {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* Compact company icon */
+.nv.employer-profile .company-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* Smaller edit button */
+.nv.employer-profile .btn {
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+/* Two equal-sized cards */
+.nv.employer-profile .e2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.nv.employer-profile .employer-profile-card {
+  min-width: 0;
+  height: 100%;
+  padding: 14px;
+  border-radius: 7px;
+}
+
+.nv.employer-profile .employer-profile-card h2 {
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+
+.nv.employer-profile .employer-profile-card p,
+.nv.employer-profile .employer-profile-card label {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.nv.employer-profile .employer-profile-card p {
+  margin-bottom: 4px;
+}
+
+.nv.employer-profile .employer-section-heading {
+  margin: 12px 0 5px !important;
+}
+
+/* Contact details */
+.nv.employer-profile .contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nv.employer-profile .contact-details p {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* Verification note */
+.nv.employer-profile .employer-verification-note {
+  overflow-wrap: anywhere;
+}
+
+/* Responsive layout */
+@media (max-width: 600px) {
+  .nv.employer-profile main.w {
+    padding: 20px 14px 0;
+  }
+
+  .nv.employer-profile .e2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nv.employer-profile .employer-company-header h2 {
+    font-size: 22px;
+  }
+}
+/* Space between profile content and footer */
+.nv.employer-profile main.w {
+  padding-bottom: 300px;
+}
+
+/* Red verification status box */
+.nv.employer-profile .employer-verification-badge {
+  display: inline-block;
+  background: #fbe4e4;
+  color: #a23b3b;
+  border: 1px solid #e8b4b4;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Edit Profile button */
+.nv.employer-profile .employer-company-header .btn {
+  background: transparent;
+  color: var(--tx);
+  border: 1px solid var(--ln);
+  border-radius: 6px;
+  padding: 9px 18px;
+}
+
+.nv.employer-profile .employer-company-header .btn:hover {
+  background: var(--tl);
+}
+
+.nv.employer-profile .employer-logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+  background: var(--pri);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.nv.employer-profile .employer-company-name {
+  font-size: 2rem;
+  font-weight: 700;
+}

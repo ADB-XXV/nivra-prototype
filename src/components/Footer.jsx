@@ -7,8 +7,8 @@ export default function Footer() {
       <div className="w">
         <p>
           <b>Nivra</b> · Find work for a day. Build experience for tomorrow.
-        </p>
-        <p>Prototype with sample data. Employers, jobs and students are fictional.</p>
+        
+        Prototype with sample data. Employers, jobs and students are fictional.</p>
       </div>
     </footer>
   );
