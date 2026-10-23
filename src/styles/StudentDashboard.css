@@ -1,0 +1,264 @@
+.student-dashboard {
+  min-height: 100vh;
+  padding: 32px 5%;
+  background: #faf9f7;
+  color: #302b28;
+  font-family: Arial, sans-serif;
+}
+
+/* Welcome section */
+.dashboard-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.welcome-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #8b7769;
+  font-weight: bold;
+}
+
+.dashboard-welcome h1 {
+  font-size: 30px;
+  margin: 8px 0;
+}
+
+.dashboard-welcome p {
+  color: #817872;
+}
+
+.student-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #e8ded5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #59463a;
+}
+
+/* Summary cards */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid #e9e2dc;
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.stat-card p {
+  margin: 0;
+  color: #726861;
+  font-size: 14px;
+}
+
+.stat-card h2 {
+  font-size: 30px;
+  margin: 12px 0 6px;
+}
+
+.stat-card span {
+  font-size: 12px;
+  color: #928780;
+}
+
+/* Main content layout */
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.dashboard-card {
+  background: white;
+  border: 1px solid #e9e2dc;
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.dashboard-card h2 {
+  font-size: 19px;
+  margin-top: 0;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.section-heading p,
+.card-subtitle {
+  font-size: 13px;
+  color: #898078;
+}
+
+.section-heading a,
+.browse-jobs-link {
+  color: #8b6652;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+/* Applications */
+.application-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 0;
+  border-top: 1px solid #f0ece8;
+}
+
+.job-icon {
+  min-width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #f2ebe5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #735b4b;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.job-details {
+  flex: 1;
+}
+
+.job-details h3 {
+  font-size: 14px;
+  margin: 0 0 5px;
+}
+
+.job-details p,
+.job-details span {
+  font-size: 12px;
+  color: #898078;
+  margin: 4px 0;
+}
+
+.status {
+  font-size: 11px;
+  padding: 7px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.under-review {
+  background: #f8edda;
+  color: #946b2d;
+}
+
+.accepted {
+  background: #e4f2e6;
+  color: #397448;
+}
+
+.shortlisted {
+  background: #e8eafa;
+  color: #505ba0;
+}
+
+/* Right sidebar */
+.dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.upcoming-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #98765f;
+  font-weight: bold;
+}
+
+.upcoming-job {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 10px;
+  background: #faf7f3;
+}
+
+.upcoming-job h3 {
+  font-size: 17px;
+  margin: 12px 0 6px;
+}
+
+.upcoming-job p {
+  font-size: 13px;
+  color: #82766d;
+}
+
+.job-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+  font-size: 12px;
+  color: #625a54;
+}
+
+.view-job-button {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #dfd4ca;
+  border-radius: 7px;
+  background: white;
+  color: #59483c;
+  cursor: pointer;
+}
+
+.view-job-button:hover {
+  background: #f2ebe5;
+}
+
+.saved-jobs-card > p {
+  color: #82766d;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+/* Footer */
+.dashboard-footer {
+  margin-top: 45px;
+  padding: 20px 0;
+  border-top: 1px solid #e9e2dc;
+  color: #928780;
+  font-size: 12px;
+}
+
+/* Smaller screens */
+@media (max-width: 800px) {
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-welcome h1 {
+    font-size: 24px;
+  }
+
+  .application-item {
+    flex-wrap: wrap;
+  }
+}
