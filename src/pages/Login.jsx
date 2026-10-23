@@ -92,7 +92,7 @@ export default function Login({
     setErrors(found);
     if (Object.keys(found).length) return;
     // Prototype only: no backend yet. Replace with a real auth call later.
-    onNavigate(role === "employer" ? "/employer/dashboard" : "/jobs");
+    onNavigate(role === "employer" ? "/employer/dashboard" : "/applications");
   };
 
   const switchMode = (m) => { setMode(m); setErrors({}); };
