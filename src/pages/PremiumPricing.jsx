@@ -14,79 +14,71 @@ const styles = `
   background: var(--cream);
   color: var(--ink);
   font-family: Inter, Arial, sans-serif;
-  font-size: 10px;
-  padding-bottom: 22px;
+  font-size: 15px;
+  padding-bottom: 33px;
 }
-.nivra-plans .top-strip {
-  height: 16px;
-  background: var(--maroon);
-  color: #f7eeee;
-  padding: 3px 9px;
-  font-size: 7px;
-  font-weight: 500;
-  letter-spacing: .05px;
-}
+
 .nivra-plans .content {
-  width: min(464px, calc(100% - 36px));
+  width: min(696px, calc(100% - 54px));
   margin: 0 auto;
-  padding-top: 13px;
+  padding-top: 20px;
 }
 .nivra-plans h1 {
-  margin: 0 0 4px;
-  font-size: 15px;
+  margin: 0 0 6px;
+  font-size: 2.3rem;
   line-height: 1.25;
   font-weight: 700;
-  letter-spacing: -.3px;
+  letter-spacing: -.45px;
 }
 .nivra-plans .subtitle {
   color: var(--muted);
-  margin: 0 0 10px;
-  font-size: 8px;
+  margin: 0 0 15px;
+  font-size: 15px;
   line-height: 1.4;
 }
 .nivra-plans .plans {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 11px;
-  margin-bottom: 9px;
+  gap: 16px;
+  margin-bottom: 14px;
 }
 .nivra-plans .plan-card {
-  min-height: 84px;
+  min-height: 126px;
   border: 1px solid #e8ded9;
-  border-radius: 5px;
+  border-radius: 8px;
   background: #fff;
-  padding: 9px 9px 8px;
+  padding: 14px 14px 12px;
 }
 .nivra-plans .plan-card.premium { border-color: #e6c8c5; }
 .nivra-plans .plan-name {
-  font-size: 9px;
+  font-size: 13.5px;
   font-weight: 700;
-  margin-bottom: 3px;
+  margin-bottom: 5px;
 }
 .nivra-plans .price {
-  font-size: 15px;
+  font-size: 22.5px;
   line-height: 1.15;
   font-weight: 700;
-  letter-spacing: -.35px;
-  margin-bottom: 3px;
+  letter-spacing: -.525px;
+  margin-bottom: 5px;
 }
 .nivra-plans .price small {
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0;
 }
 .nivra-plans .plan-desc {
   color: var(--muted);
-  font-size: 8px;
-  margin-bottom: 7px;
+  font-size: 12px;
+  margin-bottom: 10px;
 }
 .nivra-plans .status {
   display: inline-block;
-  padding: 2px 5px;
+  padding: 3px 8px;
   background: #e9f0e5;
   color: #52634e;
-  border-radius: 2px;
-  font-size: 7px;
+  border-radius: 3px;
+  font-size: 10.5px;
   line-height: 1.1;
   font-weight: 600;
 }
@@ -94,23 +86,24 @@ const styles = `
   display: inline-block;
   background: var(--maroon);
   color: white;
+  padding: 9px 16px;
+  border-radius: 6px;
 }
 .nivra-plans .upgrade:hover { background: #40292e; }
 .nivra-plans .features {
   background: #fff;
   border: 1px solid #eee5e0;
-  border-radius: 5px;
-  padding: 9px;
+  border-radius: 8px;
+  padding: 14px;
 }
-.nivra-plans .features h2 { margin: 0 0 6px; font-size: 9px; }
-.nivra-plans .features ul { margin: 0; padding-left: 14px; color: var(--muted); line-height: 1.7; }
+.nivra-plans .features h2 { margin: 0 0 9px; font-size: 1.35rem; }
+.nivra-plans .features ul { margin: 0; padding-left: 21px; color: var(--muted); line-height: 1.7; }
 `;
 
 export default function PremiumPricing() {
   return (
     <div className="nivra-plans">
       <style>{styles}</style>
-      <div className="top-strip">Nivra · Employer plans</div>
       <main className="content">
         <h1>Simple plans for better hiring</h1>
         <p className="subtitle">Choose the tools that fit your hiring needs. You can change plans at any time.</p>
