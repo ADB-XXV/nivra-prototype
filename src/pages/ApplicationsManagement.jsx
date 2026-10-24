@@ -1,5 +1,8 @@
 
+"use client";
+
 import { useState } from "react";
+import Navbar from "../components/Navbar";
 
 export default function Applicants() {
   const [applicants, setApplicants] = useState([
@@ -70,13 +73,25 @@ export default function Applicants() {
   });
 
   return (
-    <div className="applicants-page">
-      <style>{`
+    <div className="nv applicants-page">
+      {/* eslint-disable-next-line react/no-unknown-property */}
+      <style jsx>{`
         * {
           box-sizing: border-box;
         }
 
         .applicants-page {
+          --bg: #faf5f0;
+          --sf: #fff;
+          --ln: #e7ddd3;
+          --tx: #2d2124;
+          --mu: #7b6b6e;
+          --sd: #56694b;
+          --tl: #f4e3e1;
+          --sl: #e9efe3;
+          --btn: #593c42;
+          --btx: #fff;
+          --er: #a23b3b;
           min-height: 100vh;
           display: flex;
           flex-direction: column;
@@ -200,6 +215,15 @@ export default function Applicants() {
           color: #302322;
         }
 
+        .candidate-link {
+          color: inherit;
+          text-decoration: none;
+        }
+
+        .candidate-link:hover {
+          text-decoration: underline;
+        }
+
         .status-badge {
           display: inline-block;
           padding: 2px 6px;
@@ -313,8 +337,57 @@ export default function Applicants() {
             padding: 20px 16px 28px;
           }
 
-          .applicants-table {
-            min-width: 730px;
+          .table-scroll {
+            overflow-x: visible;
+          }
+
+          .applicants-table,
+          .applicants-table tbody {
+            display: block;
+            min-width: 0;
+          }
+
+          .applicants-table thead {
+            display: none;
+          }
+
+          .applicants-table tr {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            padding: 7px 0;
+            border-bottom: 1px solid #eee4de;
+          }
+
+          .applicants-table td {
+            display: flex;
+            flex-direction: column;
+            border: 0;
+            padding: 5px;
+            min-width: 0;
+          }
+
+          .applicants-table td::before {
+            content: attr(data-label);
+            margin-bottom: 2px;
+            color: #806965;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.25px;
+            text-transform: uppercase;
+          }
+
+          .applicants-table td:first-child,
+          .applicants-table td:last-child {
+            grid-column: 1 / -1;
+          }
+
+          .applicants-table td:first-child::before,
+          .applicants-table td:last-child::before {
+            content: none;
+          }
+
+          .action-buttons {
+            flex-wrap: wrap;
           }
 
           .applicants-footer p {
@@ -338,6 +411,8 @@ export default function Applicants() {
           }
         }
       `}</style>
+
+      <Navbar role="employer" active="/employer/applicants" />
 
       <main className="applicants-main">
         <section className="page-heading">
@@ -388,26 +463,31 @@ export default function Applicants() {
               <tbody>
                 {filteredApplicants.map((applicant) => (
                   <tr key={applicant.name}>
-                    <td className="candidate-name">
-                      {applicant.name}
+                    <td className="candidate-name" data-label="Candidate">
+                      <a
+                        className="candidate-link"
+                        href="/candidate-profile"
+                      >
+                        {applicant.name}
+                      </a>
                     </td>
 
-                    <td>{applicant.skills}</td>
-                    <td>{applicant.availability}</td>
-                    <td>{applicant.experience}</td>
-                    <td>{applicant.applied}</td>
+                    <td data-label="Skills">{applicant.skills}</td>
+                    <td data-label="Availability">{applicant.availability}</td>
+                    <td data-label="Experience">{applicant.experience}</td>
+                    <td data-label="Applied">{applicant.applied}</td>
 
-                    <td>
+                    <td data-label="Status">
                       <span
                         className={`status-badge status-${applicant.status
                           .toLowerCase()
-                          .replaceAll(" ", "-")}`}
+                          .replace(/ /g, "-")}`}
                       >
                         {applicant.status}
                       </span>
                     </td>
 
-                    <td>
+                    <td data-label="Actions">
                       <div className="action-buttons">
                         <button
                           className="btn-shortlist"

@@ -1,5 +1,8 @@
 
+"use client";
+
 import { useState } from "react";
+import Navbar from "../components/Navbar";
 
 export default function CandidateDetails() {
   const [status, setStatus] = useState("Under Review");
@@ -9,13 +12,25 @@ export default function CandidateDetails() {
   }
 
   return (
-    <div className="candidate-page">
-      <style>{`
+    <div className="nv candidate-page">
+      {/* eslint-disable-next-line react/no-unknown-property */}
+      <style jsx>{`
         * {
           box-sizing: border-box;
         }
 
         .candidate-page {
+          --bg: #faf5f0;
+          --sf: #fff;
+          --ln: #e7ddd3;
+          --tx: #2d2124;
+          --mu: #7b6b6e;
+          --sd: #56694b;
+          --tl: #f4e3e1;
+          --sl: #e9efe3;
+          --btn: #593c42;
+          --btx: #fff;
+          --er: #a23b3b;
           min-height: 100vh;
           display: flex;
           flex-direction: column;
@@ -36,12 +51,11 @@ export default function CandidateDetails() {
           display: block;
           padding: 0;
           margin: 0 0 8px;
-          border: none;
-          background: transparent;
           color: #8a706d;
           font-family: inherit;
           font-size: 12px;
           cursor: pointer;
+          text-decoration: none;
         }
 
         .back-link:hover {
@@ -332,13 +346,12 @@ export default function CandidateDetails() {
         }
       `}</style>
 
+      <Navbar role="employer" active="/employer/applicants" />
+
       <main className="candidate-main">
-        <button
-          className="back-link"
-          onClick={() => window.history.back()}
-        >
+        <a className="back-link" href="/employer/applicants">
           ← All applicants
-        </button>
+        </a>
 
         <section className="candidate-header">
           <div className="candidate-profile">
