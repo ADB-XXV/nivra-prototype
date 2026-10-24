@@ -1,12 +1,10 @@
 
-"use client";
+import React, { useMemo, useState } from "react";
 
-import { useState } from "react";
-import Navbar from "../components/Navbar";
-
-export default function Applicants() {
+export default function ApplicationsManagement() {
   const [applicants, setApplicants] = useState([
     {
+      id: 1,
       name: "Anjali Nair",
       skills: "Registration desk, Crowd handling",
       availability: "Sat 24 Oct, full day",
@@ -15,6 +13,7 @@ export default function Applicants() {
       status: "Under Review",
     },
     {
+      id: 2,
       name: "Rohit Das",
       skills: "Stage setup, Sound basics",
       availability: "Sat 24 Oct, full day",
@@ -23,6 +22,7 @@ export default function Applicants() {
       status: "Applied",
     },
     {
+      id: 3,
       name: "Fathima Shereen",
       skills: "Guest welcome, Billing",
       availability: "Sat 24 Oct, 9 am - 3 pm",
@@ -31,6 +31,7 @@ export default function Applicants() {
       status: "Shortlisted",
     },
     {
+      id: 4,
       name: "Arjun Menon",
       skills: "Event support, Photography",
       availability: "Sat 24 Oct, full day",
@@ -39,6 +40,7 @@ export default function Applicants() {
       status: "Applied",
     },
     {
+      id: 5,
       name: "Neha Pillai",
       skills: "Registration desk, Hindi, English",
       availability: "Sat 24 Oct, from 1 pm",
@@ -51,495 +53,600 @@ export default function Applicants() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
 
-  function updateStatus(name, status) {
-    setApplicants((previous) =>
-      previous.map((applicant) =>
-        applicant.name === name
+  const statuses = [
+    "Applied",
+    "Under Review",
+    "Shortlisted",
+    "Accepted",
+    "Rejected",
+  ];
+
+  function updateStatus(id, status) {
+    setApplicants((current) =>
+      current.map((applicant) =>
+        applicant.id === id
           ? { ...applicant, status }
           : applicant
       )
     );
   }
 
-  const filteredApplicants = applicants.filter((applicant) => {
-    const matchesSearch = applicant.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
+  const filteredApplicants = useMemo(() => {
+    return applicants.filter((applicant) => {
+      const matchesName = applicant.name
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
-    const matchesFilter =
-      filter === "All" || applicant.status === filter;
+      const matchesStatus =
+        filter === "All" || applicant.status === filter;
 
-    return matchesSearch && matchesFilter;
-  });
+      return matchesName && matchesStatus;
+    });
+  }, [applicants, search, filter]);
+
+  function statusClass(status) {
+    return status.toLowerCase().replace(/\s+/g, "-");
+  }
 
   return (
-    <div className="nv applicants-page">
-      {/* eslint-disable-next-line react/no-unknown-property */}
-      <style jsx>{`
-        * {
+    <>
+      <style>{`
+        .am-page {
+          --am-ink: #302626;
+          --am-muted: #817471;
+          --am-border: #e8dcd5;
+          --am-accent: #67464a;
+          --am-bg: #faf5f1;
+
+          width: 100%;
+          min-height: calc(100vh - 180px);
+          padding: 42px clamp(20px, 4vw, 64px) 60px;
+          box-sizing: border-box;
+          background: var(--am-bg);
+          color: var(--am-ink);
+        }
+
+        .am-page *,
+        .am-page *::before,
+        .am-page *::after {
           box-sizing: border-box;
         }
 
-        .applicants-page {
-          --bg: #faf5f0;
-          --sf: #fff;
-          --ln: #e7ddd3;
-          --tx: #2d2124;
-          --mu: #7b6b6e;
-          --sd: #56694b;
-          --tl: #f4e3e1;
-          --sl: #e9efe3;
-          --btn: #593c42;
-          --btx: #fff;
-          --er: #a23b3b;
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-          background: #faf5f0;
-          color: #302322;
-          font-family: Arial, Helvetica, sans-serif;
-          font-size: 12px;
-        }
-
-        .applicants-main {
+        .am-container {
           width: 100%;
-          max-width: 750px;
+          max-width: 1600px;
           margin: 0 auto;
-          padding: 20px 0 29px;
         }
 
-        .page-heading h1 {
-          font-size: 17px;
-          font-weight: 700;
-          margin: 0 0 6px;
-          color: #302322;
-        }
-
-        .page-heading p {
-          margin: 0;
-          color: #826e6a;
-          font-size: 11.5px;
-          line-height: 1.5;
-        }
-
-        .applicant-controls {
+        .am-heading {
           display: flex;
-          gap: 9px;
-          margin-top: 9px;
-          margin-bottom: 9px;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: 24px;
+          margin-bottom: 30px;
         }
 
-        .applicant-controls input,
-        .applicant-controls select {
-          height: 31px;
-          padding: 0 9px;
-          border: 1px solid #eadfd8;
-          border-radius: 5px;
-          background: #fff;
-          color: #342725;
-          font-family: inherit;
+        .am-eyebrow {
+          margin: 0 0 9px;
+          color: var(--am-muted);
           font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 1.5px;
+        }
+
+        .am-heading h1 {
+          margin: 0;
+          font-size: clamp(30px, 2.4vw, 40px);
+          line-height: 1.2;
+          letter-spacing: -0.7px;
+        }
+
+        .am-subtitle {
+          margin: 12px 0 0;
+          color: var(--am-muted);
+          font-size: 16px;
+          line-height: 1.6;
+        }
+
+        .am-count {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 13px 18px;
+          border: 1px solid var(--am-border);
+          border-radius: 12px;
+          background: white;
+          white-space: nowrap;
+        }
+
+        .am-count strong {
+          color: var(--am-accent);
+          font-size: 28px;
+        }
+
+        .am-count span {
+          color: var(--am-muted);
+          font-size: 14px;
+        }
+
+        .am-toolbar {
+          display: flex;
+          align-items: flex-end;
+          gap: 18px;
+          margin-bottom: 24px;
+        }
+
+        .am-search {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1;
+          max-width: 620px;
+          min-height: 52px;
+          padding: 0 16px;
+          border: 1px solid var(--am-border);
+          border-radius: 10px;
+          background: white;
+        }
+
+        .am-search:focus-within {
+          border-color: var(--am-accent);
+          box-shadow: 0 0 0 3px #67464a15;
+        }
+
+        .am-search-icon {
+          color: var(--am-muted);
+          font-size: 25px;
+        }
+
+        .am-search input {
+          width: 100%;
+          min-width: 0;
+          padding: 13px 0;
+          border: 0;
           outline: none;
+          background: transparent;
+          color: var(--am-ink);
+          font: inherit;
+          font-size: 15px;
         }
 
-        .applicant-controls input {
-          width: 188px;
+        .am-filter {
+          display: grid;
+          gap: 7px;
+          min-width: 210px;
+          color: var(--am-muted);
+          font-size: 13px;
+          font-weight: 700;
         }
 
-        .applicant-controls select {
-          width: 130px;
+        .am-filter select {
+          width: 100%;
+          min-height: 52px;
+          padding: 0 14px;
+          border: 1px solid var(--am-border);
+          border-radius: 10px;
+          background: white;
+          color: var(--am-ink);
+          font: inherit;
+          font-size: 15px;
           cursor: pointer;
         }
 
-        .applicant-controls input:focus,
-        .applicant-controls select:focus {
-          border-color: #765056;
-          box-shadow: 0 0 0 2px rgba(100, 61, 67, 0.08);
-        }
-
-        .applicant-controls input::placeholder {
-          color: #8a7b77;
-        }
-
-        .applicants-table-card {
+        .am-table-card {
           width: 100%;
-          padding: 3px 8px 4px;
-          background: #fff;
-          border: 1px solid #ebdfd8;
-          border-radius: 6px;
           overflow: hidden;
+          border: 1px solid var(--am-border);
+          border-radius: 14px;
+          background: white;
+          box-shadow: 0 5px 22px #4a2d2608;
         }
 
-        .table-scroll {
+        .am-table-heading {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 22px 26px;
+          border-bottom: 1px solid var(--am-border);
+        }
+
+        .am-table-heading h2 {
+          margin: 0;
+          font-size: 20px;
+        }
+
+        .am-table-heading span {
+          color: var(--am-muted);
+          font-size: 14px;
+        }
+
+        .am-table-scroll {
           width: 100%;
           overflow-x: auto;
         }
 
-        .applicants-table {
+        .am-table {
           width: 100%;
+          min-width: 1120px;
           border-collapse: collapse;
-          table-layout: fixed;
           text-align: left;
         }
 
-        .applicants-table th {
-          color: #806965;
-          font-size: 9.5px;
-          font-weight: 700;
+        .am-table th {
+          padding: 18px 16px;
+          background: #fcf9f7;
+          color: #776965;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.6px;
           text-transform: uppercase;
-          letter-spacing: 0.35px;
-          padding: 9px 5px 8px;
-          border-bottom: 1px solid #eadfd8;
           white-space: nowrap;
         }
 
-        .applicants-table td {
-          padding: 7px 5px;
-          font-size: 11.5px;
-          line-height: 1.45;
-          vertical-align: top;
-          border-bottom: 1px solid #eee4de;
-          overflow-wrap: break-word;
+        .am-table th:first-child,
+        .am-table td:first-child {
+          padding-left: 26px;
         }
 
-        .applicants-table th:nth-child(1) { width: 12%; }
-        .applicants-table th:nth-child(2) { width: 16%; }
-        .applicants-table th:nth-child(3) { width: 14%; }
-        .applicants-table th:nth-child(4) { width: 13%; }
-        .applicants-table th:nth-child(5) { width: 8%; }
-        .applicants-table th:nth-child(6) { width: 12%; }
-        .applicants-table th:nth-child(7) { width: 25%; }
-
-        .candidate-name {
-          font-weight: 700;
-          color: #302322;
+        .am-table td {
+          padding: 19px 16px;
+          border-top: 1px solid #eee5df;
+          color: #544946;
+          font-size: 15px;
+          line-height: 1.65;
+          vertical-align: middle;
         }
 
-        .candidate-link {
-          color: inherit;
-          text-decoration: none;
+        .am-table tbody tr:hover {
+          background: #fdfaf8;
         }
 
-        .candidate-link:hover {
-          text-decoration: underline;
-        }
-
-        .status-badge {
-          display: inline-block;
-          padding: 2px 6px;
-          border-radius: 3px;
-          font-size: 10px;
-          font-weight: 700;
-          line-height: 1.1;
-          white-space: nowrap;
-        }
-
-        .status-under-review {
-          background: #f2e1dc;
-          color: #51383a;
-        }
-
-        .status-applied {
-          background: #e9ddd1;
-          color: #59433b;
-        }
-
-        .status-shortlisted {
-          background: #e5ebdc;
-          color: #536344;
-        }
-
-        .status-accepted {
-          background: #dcebdc;
-          color: #355c3b;
-        }
-
-        .status-rejected {
-          background: #f5dedd;
-          color: #a33d3d;
-        }
-
-        .action-buttons {
+        .am-candidate {
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 12px;
+          min-width: 170px;
+        }
+
+        .am-avatar {
+          display: grid;
+          flex: 0 0 42px;
+          width: 42px;
+          height: 42px;
+          place-items: center;
+          border-radius: 12px;
+          background: #f0e2dc;
+          color: var(--am-accent);
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .am-candidate strong {
+          color: #332827;
+          font-size: 15px;
+        }
+
+        .am-status {
+          display: inline-flex;
+          align-items: center;
+          padding: 7px 11px;
+          border-radius: 7px;
+          font-size: 12px;
+          font-weight: 750;
+          line-height: 1.4;
           white-space: nowrap;
         }
 
-        .action-buttons button {
-          min-height: 24px;
-          padding: 4px 7px;
-          border-radius: 5px;
-          font-family: inherit;
-          font-size: 10.5px;
+        .am-status.applied {
+          background: #eee5dc;
+          color: #775e4e;
+        }
+
+        .am-status.under-review {
+          background: #f2e2de;
+          color: #684449;
+        }
+
+        .am-status.shortlisted {
+          background: #e7eddf;
+          color: #526b4b;
+        }
+
+        .am-status.accepted {
+          background: #dceee3;
+          color: #276442;
+        }
+
+        .am-status.rejected {
+          background: #f8e4e2;
+          color: #a33c3c;
+        }
+
+        .am-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          white-space: nowrap;
+        }
+
+        .am-button {
+          min-height: 38px;
+          padding: 8px 12px;
+          border: 1px solid var(--am-border);
+          border-radius: 8px;
+          background: white;
+          font: inherit;
+          font-size: 13px;
+          font-weight: 650;
           cursor: pointer;
-          transition: background 0.15s ease;
+          transition: background 150ms ease, opacity 150ms ease;
         }
 
-        .btn-shortlist {
-          background: #fff;
-          color: #443331;
-          border: 1px solid #eadfd8;
+        .am-button:hover:not(:disabled) {
+          background: #f5ece8;
         }
 
-        .btn-shortlist:hover {
-          background: #f6eee9;
+        .am-button:disabled {
+          cursor: default;
+          opacity: 0.45;
         }
 
-        .btn-accept {
-          background: #603f44;
-          color: #fff;
-          border: 1px solid #603f44;
+        .am-button.accept {
+          border-color: var(--am-accent);
+          background: var(--am-accent);
+          color: white;
         }
 
-        .btn-accept:hover {
-          background: #4b3035;
+        .am-button.accept:hover:not(:disabled) {
+          background: #513539;
         }
 
-        .btn-reject {
-          background: #fff;
-          color: #c44c4c;
-          border: 1px solid #d76b6b;
+        .am-button.reject {
+          border-color: #d7a4a1;
+          color: #a34545;
         }
 
-        .btn-reject:hover {
-          background: #fff0ef;
+        .am-button.reject:hover:not(:disabled) {
+          background: #fff1ef;
         }
 
-        .empty-message {
+        .am-empty {
+          padding: 55px 20px !important;
           text-align: center;
-          padding: 22px !important;
-          color: #826e6a;
         }
 
-        .applicants-footer {
-          border-top: 1px solid #eae0d9;
-          padding: 17px 20px;
-          margin-top: 0;
-          flex: 1;
+        .am-empty strong {
+          display: block;
+          font-size: 17px;
         }
 
-        .applicants-footer p {
-          max-width: 750px;
-          margin: 0 auto;
-          color: #88746f;
-          font-size: 11px;
-          line-height: 1.7;
+        .am-empty p {
+          margin: 8px 0 0;
+          color: var(--am-muted);
         }
 
-        .applicants-footer strong {
-          color: #725457;
+        .am-footer {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 18px 26px;
+          border-top: 1px solid var(--am-border);
+          background: #fcf9f7;
+          color: var(--am-muted);
+          font-size: 13px;
         }
 
-        @media (max-width: 800px) {
-          .applicants-main {
-            max-width: none;
-            padding: 20px 16px 28px;
+        @media (min-width: 1600px) {
+          .am-table td {
+            padding-top: 23px;
+            padding-bottom: 23px;
+            font-size: 16px;
           }
 
-          .table-scroll {
-            overflow-x: visible;
+          .am-table th {
+            padding-top: 20px;
+            padding-bottom: 20px;
+          }
+        }
+
+        @media (max-width: 760px) {
+          .am-page {
+            padding: 28px 16px 40px;
           }
 
-          .applicants-table,
-          .applicants-table tbody {
-            display: block;
-            min-width: 0;
-          }
-
-          .applicants-table thead {
-            display: none;
-          }
-
-          .applicants-table tr {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            padding: 7px 0;
-            border-bottom: 1px solid #eee4de;
-          }
-
-          .applicants-table td {
-            display: flex;
+          .am-heading {
+            align-items: flex-start;
             flex-direction: column;
-            border: 0;
-            padding: 5px;
-            min-width: 0;
+            gap: 18px;
           }
 
-          .applicants-table td::before {
-            content: attr(data-label);
-            margin-bottom: 2px;
-            color: #806965;
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 0.25px;
-            text-transform: uppercase;
+          .am-toolbar {
+            align-items: stretch;
+            flex-direction: column;
           }
 
-          .applicants-table td:first-child,
-          .applicants-table td:last-child {
-            grid-column: 1 / -1;
-          }
-
-          .applicants-table td:first-child::before,
-          .applicants-table td:last-child::before {
-            content: none;
-          }
-
-          .action-buttons {
-            flex-wrap: wrap;
-          }
-
-          .applicants-footer p {
+          .am-search {
             max-width: none;
           }
-        }
 
-        @media (max-width: 420px) {
-          .applicant-controls input {
-            flex: 1;
+          .am-filter {
             min-width: 0;
           }
 
-          .applicant-controls select {
-            width: 120px;
+          .am-table-heading,
+          .am-footer {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 18px;
           }
 
-          .applicants-main {
-            padding-left: 12px;
-            padding-right: 12px;
+          .am-table th:first-child,
+          .am-table td:first-child {
+            padding-left: 18px;
           }
         }
       `}</style>
 
-      <Navbar role="employer" active="/employer/applicants" />
+      <main className="am-page">
+        <div className="am-container">
+          <header className="am-heading">
+            <div>
+              <p className="am-eyebrow">EMPLOYER WORKSPACE</p>
+              <h1>Applicants</h1>
+              <p className="am-subtitle">
+                Event Assistant · Kozhikode · Sat 24 Oct
+              </p>
+            </div>
 
-      <main className="applicants-main">
-        <section className="page-heading">
-          <h1>Applicants</h1>
-          <p>
-            Event Assistant · Kozhikode · Sat 24 Oct · 1 of 5 filled
-          </p>
-        </section>
+            <div className="am-count">
+              <strong>{filteredApplicants.length}</strong>
+              <span>of {applicants.length} applicants</span>
+            </div>
+          </header>
 
-        <section className="applicant-controls">
-          <input
-            type="text"
-            placeholder="Search by name"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search applicants by name"
-          />
+          <section className="am-toolbar">
+            <label className="am-search">
+              <span className="am-search-icon" aria-hidden="true">
+                ⌕
+              </span>
+              <input
+                type="search"
+                placeholder="Search by candidate name..."
+                aria-label="Search applicants by name"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
 
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            aria-label="Filter applicants by status"
-          >
-            <option value="All">All</option>
-            <option value="Applied">Applied</option>
-            <option value="Under Review">Under Review</option>
-            <option value="Shortlisted">Shortlisted</option>
-            <option value="Accepted">Accepted</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-        </section>
-
-        <section className="applicants-table-card">
-          <div className="table-scroll">
-            <table className="applicants-table">
-              <thead>
-                <tr>
-                  <th>Candidate</th>
-                  <th>Skills</th>
-                  <th>Availability</th>
-                  <th>Experience</th>
-                  <th>Applied</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredApplicants.map((applicant) => (
-                  <tr key={applicant.name}>
-                    <td className="candidate-name" data-label="Candidate">
-                      <a
-                        className="candidate-link"
-                        href="/candidate-profile"
-                      >
-                        {applicant.name}
-                      </a>
-                    </td>
-
-                    <td data-label="Skills">{applicant.skills}</td>
-                    <td data-label="Availability">{applicant.availability}</td>
-                    <td data-label="Experience">{applicant.experience}</td>
-                    <td data-label="Applied">{applicant.applied}</td>
-
-                    <td data-label="Status">
-                      <span
-                        className={`status-badge status-${applicant.status
-                          .toLowerCase()
-                          .replace(/ /g, "-")}`}
-                      >
-                        {applicant.status}
-                      </span>
-                    </td>
-
-                    <td data-label="Actions">
-                      <div className="action-buttons">
-                        <button
-                          className="btn-shortlist"
-                          onClick={() =>
-                            updateStatus(applicant.name, "Shortlisted")
-                          }
-                        >
-                          Shortlist
-                        </button>
-
-                        <button
-                          className="btn-accept"
-                          onClick={() =>
-                            updateStatus(applicant.name, "Accepted")
-                          }
-                        >
-                          Accept
-                        </button>
-
-                        <button
-                          className="btn-reject"
-                          onClick={() =>
-                            updateStatus(applicant.name, "Rejected")
-                          }
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+            <label className="am-filter">
+              <span>Filter by status</span>
+              <select
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+              >
+                <option value="All">All statuses</option>
+                {statuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
                 ))}
+              </select>
+            </label>
+          </section>
 
-                {filteredApplicants.length === 0 && (
+          <section className="am-table-card">
+            <div className="am-table-heading">
+              <h2>All applications</h2>
+              <span>
+                Showing {filteredApplicants.length} candidates
+              </span>
+            </div>
+
+            <div className="am-table-scroll">
+              <table className="am-table">
+                <thead>
                   <tr>
-                    <td colSpan="7" className="empty-message">
-                      No applicants found.
-                    </td>
+                    <th>Candidate</th>
+                    <th>Skills</th>
+                    <th>Availability</th>
+                    <th>Experience</th>
+                    <th>Applied</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </main>
+                </thead>
 
-      <footer className="applicants-footer">
-        <p>
-          <strong>Nivra</strong> · Find work for a day. Build
-          experience for tomorrow. Prototype with sample data;
-          employers, jobs and students are fictional.
-        </p>
-      </footer>
-    </div>
+                <tbody>
+                  {filteredApplicants.map((applicant) => (
+                    <tr key={applicant.id}>
+                      <td>
+                        <div className="am-candidate">
+                          <div className="am-avatar">
+                            {applicant.name
+                              .split(" ")
+                              .map((part) => part[0])
+                              .slice(0, 2)
+                              .join("")}
+                          </div>
+                          <strong>{applicant.name}</strong>
+                        </div>
+                      </td>
+
+                      <td>{applicant.skills}</td>
+                      <td>{applicant.availability}</td>
+                      <td>{applicant.experience}</td>
+                      <td>{applicant.applied}</td>
+
+                      <td>
+                        <span
+                          className={`am-status ${statusClass(
+                            applicant.status
+                          )}`}
+                        >
+                          {applicant.status}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="am-actions">
+                          <button
+                            className="am-button"
+                            disabled={applicant.status === "Shortlisted"}
+                            onClick={() =>
+                              updateStatus(applicant.id, "Shortlisted")
+                            }
+                          >
+                            Shortlist
+                          </button>
+
+                          <button
+                            className="am-button accept"
+                            disabled={applicant.status === "Accepted"}
+                            onClick={() =>
+                              updateStatus(applicant.id, "Accepted")
+                            }
+                          >
+                            Accept
+                          </button>
+
+                          <button
+                            className="am-button reject"
+                            disabled={applicant.status === "Rejected"}
+                            onClick={() =>
+                              updateStatus(applicant.id, "Rejected")
+                            }
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {filteredApplicants.length === 0 && (
+                    <tr>
+                      <td className="am-empty" colSpan={7}>
+                        <strong>No applicants found</strong>
+                        <p>
+                          Try another name or select a different status.
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <footer className="am-footer">
+              <span>
+                {filteredApplicants.length} of {applicants.length} results
+              </span>
+              <span>Prototype · Sample application data</span>
+            </footer>
+          </section>
+        </div>
+      </main>
+    </>
   );
 }

@@ -1,459 +1,696 @@
 
-"use client";
+import React, { useState } from "react";
 
-import { useState } from "react";
-import Navbar from "../components/Navbar";
-
-export default function CandidateDetails() {
+export default function CandidateProfile() {
   const [status, setStatus] = useState("Under Review");
 
-  function handleAction(action) {
-    setStatus(action);
-  }
+  const skills = [
+    "Registration desk",
+    "Crowd handling",
+    "Malayalam",
+    "English",
+    "Hindi",
+  ];
+
+  const statusClass = status.toLowerCase().replace(/\s+/g, "-");
 
   return (
-    <div className="nv candidate-page">
-      {/* eslint-disable-next-line react/no-unknown-property */}
-      <style jsx>{`
-        * {
+    <>
+      <style>{`
+        .cp-page {
+          --cp-ink: #302626;
+          --cp-muted: #817471;
+          --cp-border: #e8dcd5;
+          --cp-accent: #67464a;
+          --cp-bg: #faf5f1;
+
+          width: 100%;
+          min-height: calc(100vh - 180px);
+          padding: 34px clamp(20px, 5vw, 80px) 60px;
+          box-sizing: border-box;
+          background: var(--cp-bg);
+          color: var(--cp-ink);
+        }
+
+        .cp-page *,
+        .cp-page *::before,
+        .cp-page *::after {
           box-sizing: border-box;
         }
 
-        .candidate-page {
-          --bg: #faf5f0;
-          --sf: #fff;
-          --ln: #e7ddd3;
-          --tx: #2d2124;
-          --mu: #7b6b6e;
-          --sd: #56694b;
-          --tl: #f4e3e1;
-          --sl: #e9efe3;
-          --btn: #593c42;
-          --btx: #fff;
-          --er: #a23b3b;
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-          background: #faf5f0;
-          color: #302322;
-          font-family: Arial, Helvetica, sans-serif;
-          font-size: 12px;
-        }
-
-        .candidate-main {
+        .cp-container {
           width: 100%;
-          max-width: 754px;
+          max-width: 1450px;
           margin: 0 auto;
-          padding: 20px 0 40px;
         }
 
-        .back-link {
-          display: block;
-          padding: 0;
-          margin: 0 0 8px;
-          color: #8a706d;
-          font-family: inherit;
-          font-size: 12px;
-          cursor: pointer;
+        .cp-back {
+          display: inline-flex;
+          align-items: center;
+          gap: 9px;
+          margin-bottom: 26px;
+          color: var(--cp-muted);
+          font-size: 15px;
+          font-weight: 550;
           text-decoration: none;
         }
 
-        .back-link:hover {
-          color: #603f44;
+        .cp-back:hover {
+          color: var(--cp-accent);
         }
 
-        .candidate-header {
+        .cp-back span {
+          font-size: 21px;
+        }
+
+        .cp-header {
           display: flex;
+          align-items: center;
           justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 12px;
+          gap: 28px;
+          margin-bottom: 30px;
         }
 
-        .candidate-profile {
+        .cp-identity {
           display: flex;
           align-items: center;
-          gap: 9px;
+          gap: 18px;
           min-width: 0;
         }
 
-        .candidate-avatar {
-          width: 41px;
-          height: 41px;
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #603f44;
+        .cp-avatar {
+          display: grid;
+          flex: 0 0 68px;
+          width: 68px;
+          height: 68px;
+          place-items: center;
+          border-radius: 16px;
+          background: var(--cp-accent);
           color: white;
-          border-radius: 7px;
-          font-size: 16px;
-          font-weight: 700;
+          font-size: 23px;
+          font-weight: 800;
         }
 
-        .candidate-info h1 {
-          margin: 0 0 3px;
-          font-size: 21px;
-          line-height: 1.15;
-          font-weight: 700;
-          color: #211918;
-        }
-
-        .candidate-info p {
+        .cp-heading-text h1 {
           margin: 0;
-          font-size: 12px;
-          color: #806d69;
+          font-size: clamp(27px, 2.2vw, 36px);
+          font-weight: 750;
+          letter-spacing: -0.7px;
+          line-height: 1.25;
         }
 
-        .candidate-actions {
+        .cp-heading-text p {
+          margin: 8px 0 0;
+          color: var(--cp-muted);
+          font-size: 16px;
+          line-height: 1.5;
+        }
+
+        .cp-actions {
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          gap: 8px;
-          flex-shrink: 0;
+          flex-wrap: wrap;
+          gap: 10px;
         }
 
-        .candidate-status {
-          display: inline-block;
-          padding: 4px 7px;
-          border-radius: 4px;
-          background: #f1e1dc;
-          color: #4e3537;
-          font-size: 10px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .status-shortlisted {
-          background: #e5ebdc;
-          color: #536344;
-        }
-
-        .status-accepted {
-          background: #dcebdc;
-          color: #355c3b;
-        }
-
-        .status-rejected {
-          background: #f5dedd;
-          color: #a33d3d;
-        }
-
-        .candidate-btn {
-          height: 25px;
-          padding: 0 9px;
-          border-radius: 6px;
-          font-family: inherit;
-          font-size: 11px;
-          white-space: nowrap;
-          cursor: pointer;
-          transition: background 0.15s ease;
-        }
-
-        .shortlist-btn {
-          color: #443331;
-          background: transparent;
-          border: 1px solid #eadfd8;
-        }
-
-        .shortlist-btn:hover {
-          background: #f1e7e0;
-        }
-
-        .accept-btn {
-          color: white;
-          background: #603f44;
-          border: 1px solid #603f44;
-        }
-
-        .accept-btn:hover {
-          background: #4b3035;
-        }
-
-        .reject-btn {
-          color: #c44c4c;
-          background: transparent;
-          border: 1px solid #d76b6b;
-        }
-
-        .reject-btn:hover {
-          background: #fff0ef;
-        }
-
-        .candidate-content {
-          display: grid;
-          grid-template-columns: 452px 283px;
-          gap: 17px;
-          align-items: start;
-        }
-
-        .detail-card {
-          min-width: 0;
-          background: #fff;
-          border: 1px solid #ebdfd8;
-          border-radius: 7px;
-          padding: 13px 14px;
-        }
-
-        .detail-card h2 {
-          margin: 0 0 5px;
-          color: #302322;
+        .cp-status {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 40px;
+          padding: 9px 13px;
+          border-radius: 8px;
+          background: #f2e2de;
+          color: #684449;
           font-size: 13px;
-          font-weight: 700;
+          font-weight: 750;
+          white-space: nowrap;
         }
 
-        .detail-card h3 {
-          margin: 7px 0 5px;
-          color: #302322;
-          font-size: 12px;
-          font-weight: 700;
+        .cp-status.applied {
+          background: #eee5dc;
+          color: #775e4e;
         }
 
-        .detail-card p {
+        .cp-status.shortlisted {
+          background: #e7eddf;
+          color: #526b4b;
+        }
+
+        .cp-status.accepted {
+          background: #dceee3;
+          color: #276442;
+        }
+
+        .cp-status.rejected {
+          background: #f8e4e2;
+          color: #a33c3c;
+        }
+
+        .cp-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 42px;
+          padding: 10px 15px;
+          border: 1px solid var(--cp-border);
+          border-radius: 9px;
+          background: white;
+          font: inherit;
+          font-size: 14px;
+          font-weight: 650;
+          cursor: pointer;
+          transition: background 150ms ease, opacity 150ms ease;
+        }
+
+        .cp-button:hover:not(:disabled) {
+          background: #f5ece8;
+        }
+
+        .cp-button:disabled {
+          cursor: default;
+          opacity: 0.45;
+        }
+
+        .cp-button.accept {
+          border-color: var(--cp-accent);
+          background: var(--cp-accent);
+          color: white;
+        }
+
+        .cp-button.accept:hover:not(:disabled) {
+          background: #513539;
+        }
+
+        .cp-button.reject {
+          border-color: #d7a4a1;
+          color: #a34545;
+        }
+
+        .cp-button.reject:hover:not(:disabled) {
+          background: #fff1ef;
+        }
+
+        .cp-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.95fr);
+          align-items: start;
+          gap: 24px;
+        }
+
+        .cp-card {
+          min-width: 0;
+          padding: clamp(24px, 2.3vw, 36px);
+          border: 1px solid var(--cp-border);
+          border-radius: 16px;
+          background: white;
+          box-shadow: 0 5px 22px #4a2d2608;
+        }
+
+        .cp-card-heading {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+          margin-bottom: 24px;
+        }
+
+        .cp-label {
+          display: block;
+          margin-bottom: 9px;
+          color: #9a8177;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 1.4px;
+        }
+
+        .cp-card-heading h2 {
           margin: 0;
-          line-height: 1.45;
-          font-size: 12px;
+          font-size: clamp(20px, 1.5vw, 24px);
+          font-weight: 750;
+          letter-spacing: -0.35px;
+          line-height: 1.35;
         }
 
-        .application-message {
-          margin-bottom: 7px !important;
-          line-height: 1.45 !important;
+        .cp-card-icon {
+          display: grid;
+          flex: 0 0 44px;
+          width: 44px;
+          height: 44px;
+          place-items: center;
+          border-radius: 12px;
+          background: #f7efeb;
+          color: var(--cp-accent);
+          font-size: 22px;
         }
 
-        .skill-list {
+        .cp-message {
+          margin: 0 0 30px;
+          padding: 20px 22px;
+          border-left: 4px solid #b99b8c;
+          border-radius: 0 10px 10px 0;
+          background: #fcf8f5;
+          color: #554844;
+          font-size: 17px;
+          line-height: 1.8;
+        }
+
+        .cp-detail {
+          margin-top: 25px;
+        }
+
+        .cp-detail h3 {
+          margin: 0 0 12px;
+          color: #413331;
+          font-size: 16px;
+          font-weight: 750;
+        }
+
+        .cp-skills {
           display: flex;
           flex-wrap: wrap;
-          gap: 5px;
-          margin: 0 0 5px;
+          gap: 10px;
         }
 
-        .skill-list span {
-          padding: 3px 7px;
-          border: 1px solid #eadfd8;
-          border-radius: 4px;
-          background: #fff;
-          color: #443331;
-          font-size: 11px;
-          line-height: 1.2;
+        .cp-skill {
+          display: inline-flex;
+          align-items: center;
+          min-height: 36px;
+          padding: 8px 13px;
+          border: 1px solid #e6d8d0;
+          border-radius: 8px;
+          background: #fffdfb;
+          color: #5d4b46;
+          font-size: 14px;
+          line-height: 1.4;
         }
 
-        .requirements-card {
-          padding: 13px 14px 22px;
+        .cp-value {
+          margin: 0;
+          color: #5d4b46;
+          font-size: 16px;
+          line-height: 1.65;
         }
 
-        .job-description {
-          color: #88746f;
-          line-height: 1.45 !important;
-          margin-bottom: 8px !important;
+        .cp-job {
+          padding: 22px;
+          border: 1px solid #eee3dc;
+          border-radius: 12px;
+          background: #fcf8f5;
         }
 
-        .requirements-card .match-heading {
-          margin-top: 8px;
-          margin-bottom: 5px;
+        .cp-job h3 {
+          margin: 0 0 18px;
+          color: #443431;
+          font-size: 20px;
+          font-weight: 750;
         }
 
-        .match-list {
+        .cp-job-meta {
+          display: grid;
+          gap: 14px;
+        }
+
+        .cp-job-meta p {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 0;
+          color: #74645e;
+          font-size: 15px;
+          line-height: 1.5;
+        }
+
+        .cp-meta-icon {
+          display: grid;
+          flex: 0 0 32px;
+          width: 32px;
+          height: 32px;
+          place-items: center;
+          border-radius: 9px;
+          background: #f0e4dd;
+          color: var(--cp-accent);
+          font-size: 17px;
+        }
+
+        .cp-match {
+          margin-top: 30px;
+        }
+
+        .cp-match h3 {
+          margin: 0 0 18px;
+          font-size: 18px;
+          font-weight: 750;
+          line-height: 1.45;
+        }
+
+        .cp-match-list {
+          display: grid;
+          gap: 17px;
           margin: 0;
           padding: 0;
           list-style: none;
         }
 
-        .match-list li {
-          position: relative;
-          padding-left: 13px;
-          margin-bottom: 2px;
-          color: #5e7050;
+        .cp-match-list li {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          color: #5b6b52;
+          font-size: 15px;
+          line-height: 1.6;
+        }
+
+        .cp-check {
+          display: grid;
+          flex: 0 0 24px;
+          width: 24px;
+          height: 24px;
+          place-items: center;
+          border-radius: 50%;
+          background: #e7eddf;
+          color: #55704e;
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        .cp-match-summary {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-top: 30px;
+          padding: 18px;
+          border: 1px solid #e5e9dc;
+          border-radius: 12px;
+          background: #f7f9f2;
+        }
+
+        .cp-score {
+          display: grid;
+          flex: 0 0 54px;
+          width: 54px;
+          height: 54px;
+          place-items: center;
+          border-radius: 12px;
+          background: #e3ead8;
+          color: #526b4b;
+          font-size: 17px;
+          font-weight: 850;
+        }
+
+        .cp-match-summary strong {
+          display: block;
+          color: #40513a;
+          font-size: 15px;
+        }
+
+        .cp-match-summary p {
+          margin: 5px 0 0;
+          color: #7b8772;
           font-size: 12px;
-          line-height: 1.3;
+          line-height: 1.5;
         }
 
-        .match-list li::before {
-          content: "✓";
-          position: absolute;
-          left: 0;
-          color: #73865f;
-          font-weight: 700;
-        }
-
-        .disclaimer {
-          margin-top: 9px !important;
-          color: #88746f;
-          font-size: 11px !important;
-          line-height: 1.45 !important;
-        }
-
-        .candidate-footer {
-          margin-top: auto;
-          border-top: 1px solid #eae0d9;
-          padding: 17px 20px;
-        }
-
-        .candidate-footer p {
-          max-width: 754px;
-          margin: 0 auto;
-          color: #88746f;
-          font-size: 11px;
+        .cp-disclaimer {
+          margin: 22px 0 0;
+          color: #94857e;
+          font-size: 13px;
           line-height: 1.7;
         }
 
-        .candidate-footer strong {
-          color: #725457;
-        }
-
-        @media (max-width: 800px) {
-          .candidate-main {
-            max-width: none;
-            padding: 20px 16px 36px;
+        @media (min-width: 1600px) {
+          .cp-message {
+            font-size: 18px;
           }
 
-          .candidate-content {
-            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-            gap: 12px;
-          }
-
-          .candidate-header {
-            flex-wrap: wrap;
-          }
-
-          .candidate-actions {
-            flex-wrap: wrap;
-            justify-content: flex-start;
+          .cp-value,
+          .cp-match-list li {
+            font-size: 16px;
           }
         }
 
-        @media (max-width: 560px) {
-          .candidate-content {
-            grid-template-columns: 1fr;
-          }
-
-          .candidate-header {
+        @media (max-width: 1050px) {
+          .cp-header {
             align-items: flex-start;
             flex-direction: column;
           }
 
-          .candidate-actions {
-            width: 100%;
-            gap: 6px;
+          .cp-actions {
+            justify-content: flex-start;
           }
 
-          .candidate-info h1 {
+          .cp-grid {
+            grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
+            gap: 18px;
+          }
+
+          .cp-card {
+            padding: 22px;
+          }
+        }
+
+        @media (max-width: 760px) {
+          .cp-page {
+            padding: 26px 16px 40px;
+          }
+
+          .cp-header {
+            gap: 22px;
+            margin-bottom: 24px;
+          }
+
+          .cp-identity {
+            align-items: flex-start;
+            gap: 14px;
+          }
+
+          .cp-avatar {
+            flex-basis: 54px;
+            width: 54px;
+            height: 54px;
+            border-radius: 12px;
             font-size: 19px;
           }
 
-          .candidate-footer {
+          .cp-heading-text h1 {
+            font-size: 27px;
+          }
+
+          .cp-heading-text p {
+            font-size: 14px;
+          }
+
+          .cp-actions {
+            justify-content: flex-start;
+            gap: 8px;
+          }
+
+          .cp-status,
+          .cp-button {
+            min-height: 38px;
+            padding: 8px 11px;
+            font-size: 12px;
+          }
+
+          .cp-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 18px;
+          }
+
+          .cp-card {
+            padding: 22px 18px;
+            border-radius: 13px;
+          }
+
+          .cp-message {
             padding: 16px;
+            font-size: 15px;
+          }
+
+          .cp-detail {
+            margin-top: 22px;
+          }
+
+          .cp-skill {
+            font-size: 13px;
           }
         }
       `}</style>
 
-      <Navbar role="employer" active="/employer/applicants" />
+      <main className="cp-page">
+        <div className="cp-container">
+          <a href="/employer/applicants" className="cp-back">
+            <span aria-hidden="true">←</span> All applicants
+          </a>
 
-      <main className="candidate-main">
-        <a className="back-link" href="/employer/applicants">
-          ← All applicants
-        </a>
+          <header className="cp-header">
+            <div className="cp-identity">
+              <div className="cp-avatar">AN</div>
 
-        <section className="candidate-header">
-          <div className="candidate-profile">
-            <div className="candidate-avatar">AN</div>
-
-            <div className="candidate-info">
-              <h1>Anjali Nair</h1>
-              <p>St. Joseph’s College, Devagiri</p>
-            </div>
-          </div>
-
-          <div className="candidate-actions">
-            <span
-              className={`candidate-status ${
-                status === "Under Review"
-                  ? ""
-                  : `status-${status.toLowerCase()}`
-              }`}
-            >
-              {status}
-            </span>
-
-            <button
-              className="candidate-btn shortlist-btn"
-              onClick={() => handleAction("Shortlisted")}
-            >
-              Shortlist
-            </button>
-
-            <button
-              className="candidate-btn accept-btn"
-              onClick={() => handleAction("Accepted")}
-            >
-              Accept
-            </button>
-
-            <button
-              className="candidate-btn reject-btn"
-              onClick={() => handleAction("Rejected")}
-            >
-              Reject
-            </button>
-          </div>
-        </section>
-
-        <section className="candidate-content">
-          <article className="detail-card application-card">
-            <h2>Application message</h2>
-
-            <p className="application-message">
-              “I volunteered at the registration desk for two
-              college fests and can reach the venue by 8:30 am.”
-            </p>
-
-            <h3>Skills</h3>
-
-            <div className="skill-list">
-              <span>Registration desk</span>
-              <span>Crowd handling</span>
-              <span>Malayalam, English, Hindi</span>
+              <div className="cp-heading-text">
+                <h1>Anjali Nair</h1>
+                <p>St. Joseph’s College, Devagiri</p>
+              </div>
             </div>
 
-            <h3>Experience</h3>
-            <p>2 college fests</p>
+            <div className="cp-actions">
+              <span className={`cp-status ${statusClass}`}>
+                {status}
+              </span>
 
-            <h3>Availability</h3>
-            <p>Sat 24 Oct, full day</p>
-          </article>
+              <button
+                className="cp-button"
+                disabled={status === "Shortlisted"}
+                onClick={() => setStatus("Shortlisted")}
+              >
+                Shortlist
+              </button>
 
-          <aside className="detail-card requirements-card">
-            <h2>Job requirements</h2>
+              <button
+                className="cp-button accept"
+                disabled={status === "Accepted"}
+                onClick={() => setStatus("Accepted")}
+              >
+                Accept
+              </button>
 
-            <p className="job-description">
-              Event Assistant · 24 Oct · 9 am – 5 pm ·
-              Kozhikode
-            </p>
+              <button
+                className="cp-button reject"
+                disabled={status === "Rejected"}
+                onClick={() => setStatus("Rejected")}
+              >
+                Reject
+              </button>
+            </div>
+          </header>
 
-            <h2 className="match-heading">
-              Why this candidate may match
-            </h2>
+          <div className="cp-grid">
+            <section className="cp-card">
+              <div className="cp-card-heading">
+                <div>
+                  <span className="cp-label">
+                    APPLICATION DETAILS
+                  </span>
+                  <h2>Application message</h2>
+                </div>
 
-            <ul className="match-list">
-              <li>4 of 5 required skills</li>
-              <li>Free 9 am – 5 pm on 24 Oct</li>
-              <li>Kozhikode, about 3 km away</li>
-              <li>2 similar events</li>
-            </ul>
+                <span className="cp-card-icon" aria-hidden="true">
+                  ✉
+                </span>
+              </div>
 
-            <p className="disclaimer">
-              Indicative only. Check the profile before deciding.
-            </p>
-          </aside>
-        </section>
+              <blockquote className="cp-message">
+                “I volunteered at the registration desk for two
+                college fests and can reach the venue by 8:30 am.”
+              </blockquote>
+
+              <div className="cp-detail">
+                <h3>Skills</h3>
+                <div className="cp-skills">
+                  {skills.map((skill) => (
+                    <span className="cp-skill" key={skill}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="cp-detail">
+                <h3>Experience</h3>
+                <p className="cp-value">2 college fests</p>
+              </div>
+
+              <div className="cp-detail">
+                <h3>Availability</h3>
+                <p className="cp-value">Sat 24 Oct, full day</p>
+              </div>
+
+              <div className="cp-detail">
+                <h3>College</h3>
+                <p className="cp-value">
+                  St. Joseph’s College, Devagiri
+                </p>
+              </div>
+            </section>
+
+            <aside className="cp-card">
+              <div className="cp-card-heading">
+                <div>
+                  <span className="cp-label">
+                    POSITION OVERVIEW
+                  </span>
+                  <h2>Job requirements</h2>
+                </div>
+
+                <span className="cp-card-icon" aria-hidden="true">
+                  ▤
+                </span>
+              </div>
+
+              <div className="cp-job">
+                <h3>Event Assistant</h3>
+
+                <div className="cp-job-meta">
+                  <p>
+                    <span className="cp-meta-icon">▦</span>
+                    24 Oct
+                  </p>
+
+                  <p>
+                    <span className="cp-meta-icon">◷</span>
+                    9 am – 5 pm
+                  </p>
+
+                  <p>
+                    <span className="cp-meta-icon">⌖</span>
+                    Kozhikode
+                  </p>
+                </div>
+              </div>
+
+              <div className="cp-match">
+                <h3>Why this candidate may match</h3>
+
+                <ul className="cp-match-list">
+                  <li>
+                    <span className="cp-check">✓</span>
+                    <span>4 of 5 required skills</span>
+                  </li>
+
+                  <li>
+                    <span className="cp-check">✓</span>
+                    <span>Free 9 am – 5 pm on 24 Oct</span>
+                  </li>
+
+                  <li>
+                    <span className="cp-check">✓</span>
+                    <span>Kozhikode, about 3 km away</span>
+                  </li>
+
+                  <li>
+                    <span className="cp-check">✓</span>
+                    <span>2 similar events</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="cp-match-summary">
+                <span className="cp-score">4/5</span>
+                <div>
+                  <strong>Good potential match</strong>
+                  <p>Based on available profile information</p>
+                </div>
+              </div>
+
+              <p className="cp-disclaimer">
+                Indicative only. Check the candidate’s profile
+                before making a final decision.
+              </p>
+            </aside>
+          </div>
+        </div>
       </main>
-
-      <footer className="candidate-footer">
-        <p>
-          <strong>Nivra</strong> · Find work for a day. Build
-          experience for tomorrow. Prototype with sample data;
-          employers, jobs and students are fictional.
-        </p>
-      </footer>
-    </div>
+    </>
   );
 }
