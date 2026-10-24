@@ -1,8 +1,11 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
 
 export default function CandidateProfile() {
   const [status, setStatus] = useState("Under Review");
+
+  const statusOrder = ["Under Review", "Shortlisted", "Accepted", "Rejected"];
 
   const skills = [
     "Registration desk",
@@ -13,6 +16,13 @@ export default function CandidateProfile() {
   ];
 
   const statusClass = status.toLowerCase().replace(/\s+/g, "-");
+
+  const canAdvanceTo = (nextStatus) => {
+    const currentIndex = statusOrder.indexOf(status);
+    const nextIndex = statusOrder.indexOf(nextStatus);
+
+    return nextIndex >= currentIndex;
+  };
 
   return (
     <>
@@ -126,6 +136,11 @@ export default function CandidateProfile() {
           font-size: 13px;
           font-weight: 750;
           white-space: nowrap;
+        }
+
+        .cp-status.under-review {
+          background: #f2e2de;
+          color: #684449;
         }
 
         .cp-status.applied {
@@ -520,9 +535,9 @@ export default function CandidateProfile() {
 
       <main className="cp-page">
         <div className="cp-container">
-          <a href="/employer/applicants" className="cp-back">
+          <Link href="/employer/applicants" className="cp-back">
             <span aria-hidden="true">←</span> All applicants
-          </a>
+          </Link>
 
           <header className="cp-header">
             <div className="cp-identity">
@@ -541,7 +556,7 @@ export default function CandidateProfile() {
 
               <button
                 className="cp-button"
-                disabled={status === "Shortlisted"}
+                disabled={status === "Shortlisted" || !canAdvanceTo("Shortlisted")}
                 onClick={() => setStatus("Shortlisted")}
               >
                 Shortlist
@@ -549,7 +564,7 @@ export default function CandidateProfile() {
 
               <button
                 className="cp-button accept"
-                disabled={status === "Accepted"}
+                disabled={status === "Accepted" || !canAdvanceTo("Accepted")}
                 onClick={() => setStatus("Accepted")}
               >
                 Accept
@@ -557,7 +572,7 @@ export default function CandidateProfile() {
 
               <button
                 className="cp-button reject"
-                disabled={status === "Rejected"}
+                disabled={status === "Rejected" || !canAdvanceTo("Rejected")}
                 onClick={() => setStatus("Rejected")}
               >
                 Reject

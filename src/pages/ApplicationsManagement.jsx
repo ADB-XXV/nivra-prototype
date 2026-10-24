@@ -1,7 +1,9 @@
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function ApplicationsManagement() {
+  const statusOrder = ["Applied", "Under Review", "Shortlisted", "Accepted", "Rejected"];
+
   const [applicants, setApplicants] = useState([
     {
       id: 1,
@@ -61,13 +63,29 @@ export default function ApplicationsManagement() {
     "Rejected",
   ];
 
+  function canAdvanceStatus(currentStatus, nextStatus) {
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    const nextIndex = statusOrder.indexOf(nextStatus);
+
+    return nextIndex >= currentIndex;
+  }
+
   function updateStatus(id, status) {
     setApplicants((current) =>
-      current.map((applicant) =>
-        applicant.id === id
-          ? { ...applicant, status }
-          : applicant
-      )
+      current.map((applicant) => {
+        if (applicant.id !== id) {
+          return applicant;
+        }
+
+        const currentIndex = statusOrder.indexOf(applicant.status);
+        const nextIndex = statusOrder.indexOf(status);
+
+        if (nextIndex < currentIndex) {
+          return applicant;
+        }
+
+        return { ...applicant, status };
+      })
     );
   }
 
@@ -592,7 +610,10 @@ export default function ApplicationsManagement() {
                         <div className="am-actions">
                           <button
                             className="am-button"
-                            disabled={applicant.status === "Shortlisted"}
+                            disabled={
+                              applicant.status === "Shortlisted" ||
+                              !canAdvanceStatus(applicant.status, "Shortlisted")
+                            }
                             onClick={() =>
                               updateStatus(applicant.id, "Shortlisted")
                             }
@@ -602,7 +623,10 @@ export default function ApplicationsManagement() {
 
                           <button
                             className="am-button accept"
-                            disabled={applicant.status === "Accepted"}
+                            disabled={
+                              applicant.status === "Accepted" ||
+                              !canAdvanceStatus(applicant.status, "Accepted")
+                            }
                             onClick={() =>
                               updateStatus(applicant.id, "Accepted")
                             }
@@ -612,7 +636,10 @@ export default function ApplicationsManagement() {
 
                           <button
                             className="am-button reject"
-                            disabled={applicant.status === "Rejected"}
+                            disabled={
+                              applicant.status === "Rejected" ||
+                              !canAdvanceStatus(applicant.status, "Rejected")
+                            }
                             onClick={() =>
                               updateStatus(applicant.id, "Rejected")
                             }
