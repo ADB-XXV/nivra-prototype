@@ -1,8 +1,10 @@
 
+"use client";
+
 import { useMemo, useState } from "react";
 
 export default function ApplicationsManagement() {
-  const statusOrder = ["Applied", "Under Review", "Shortlisted", "Accepted", "Rejected"];
+  const terminalStatuses = ["Accepted", "Rejected"];
 
   const [applicants, setApplicants] = useState([
     {
@@ -63,24 +65,30 @@ export default function ApplicationsManagement() {
     "Rejected",
   ];
 
-  function canAdvanceStatus(currentStatus, nextStatus) {
-    const currentIndex = statusOrder.indexOf(currentStatus);
-    const nextIndex = statusOrder.indexOf(nextStatus);
+  function canUpdateStatus(currentStatus, nextStatus) {
+    if (terminalStatuses.includes(currentStatus)) {
+      return false;
+    }
 
-    return nextIndex >= currentIndex;
+    if (nextStatus === "Shortlisted") {
+      return currentStatus === "Applied" || currentStatus === "Under Review";
+    }
+
+    if (nextStatus === "Accepted") {
+      return currentStatus === "Shortlisted";
+    }
+
+    return nextStatus === "Rejected" &&
+      ["Applied", "Under Review", "Shortlisted"].includes(currentStatus);
   }
 
   function updateStatus(id, status) {
     setApplicants((current) =>
       current.map((applicant) => {
-        if (applicant.id !== id) {
-          return applicant;
-        }
-
-        const currentIndex = statusOrder.indexOf(applicant.status);
-        const nextIndex = statusOrder.indexOf(status);
-
-        if (nextIndex < currentIndex) {
+        if (
+          applicant.id !== id ||
+          !canUpdateStatus(applicant.status, status)
+        ) {
           return applicant;
         }
 
@@ -117,7 +125,7 @@ export default function ApplicationsManagement() {
           --am-bg: #faf5f1;
 
           width: 100%;
-          min-height: calc(100vh - 180px);
+          min-height: 100vh;
           padding: 42px clamp(20px, 4vw, 64px) 60px;
           box-sizing: border-box;
           background: var(--am-bg);
@@ -132,7 +140,7 @@ export default function ApplicationsManagement() {
 
         .am-container {
           width: 100%;
-          max-width: 1600px;
+          max-width: 1800px;
           margin: 0 auto;
         }
 
@@ -154,7 +162,7 @@ export default function ApplicationsManagement() {
 
         .am-heading h1 {
           margin: 0;
-          font-size: clamp(30px, 2.4vw, 40px);
+          font-size: clamp(32px, 2.8vw, 48px);
           line-height: 1.2;
           letter-spacing: -0.7px;
         }
@@ -271,7 +279,7 @@ export default function ApplicationsManagement() {
 
         .am-table-heading h2 {
           margin: 0;
-          font-size: 20px;
+          font-size: 22px;
         }
 
         .am-table-heading span {
@@ -311,7 +319,7 @@ export default function ApplicationsManagement() {
           padding: 19px 16px;
           border-top: 1px solid #eee5df;
           color: #544946;
-          font-size: 15px;
+          font-size: 16px;
           line-height: 1.65;
           vertical-align: middle;
         }
@@ -503,6 +511,82 @@ export default function ApplicationsManagement() {
           .am-table td:first-child {
             padding-left: 18px;
           }
+
+          .am-table-scroll {
+            overflow: visible;
+          }
+
+          .am-table,
+          .am-table tbody {
+            display: block;
+            width: 100%;
+            min-width: 0;
+          }
+
+          .am-table thead {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            clip-path: inset(50%);
+          }
+
+          .am-table tbody tr {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            padding: 12px 16px;
+            border-top: 1px solid #eee5df;
+          }
+
+          .am-table td {
+            display: flex;
+            min-width: 0;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+            padding: 10px 2px;
+            border: 0;
+            overflow-wrap: anywhere;
+            font-size: 14px;
+          }
+
+          .am-table td::before {
+            content: attr(data-label);
+            color: var(--am-muted);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+          }
+
+          .am-table td:first-child,
+          .am-table td:last-child {
+            grid-column: 1 / -1;
+            padding-left: 2px;
+          }
+
+          .am-table td:first-child::before,
+          .am-table td.am-empty::before {
+            content: none;
+          }
+
+          .am-table td.am-empty {
+            grid-column: 1 / -1;
+            padding: 30px 4px !important;
+          }
+
+          .am-actions {
+            width: 100%;
+            flex-wrap: wrap;
+            white-space: normal;
+          }
+
+          .am-button {
+            flex: 1 1 85px;
+          }
         }
       `}</style>
 
@@ -578,7 +662,7 @@ export default function ApplicationsManagement() {
                 <tbody>
                   {filteredApplicants.map((applicant) => (
                     <tr key={applicant.id}>
-                      <td>
+                      <td data-label="Candidate">
                         <div className="am-candidate">
                           <div className="am-avatar">
                             {applicant.name
@@ -591,12 +675,12 @@ export default function ApplicationsManagement() {
                         </div>
                       </td>
 
-                      <td>{applicant.skills}</td>
-                      <td>{applicant.availability}</td>
-                      <td>{applicant.experience}</td>
-                      <td>{applicant.applied}</td>
+                      <td data-label="Skills">{applicant.skills}</td>
+                      <td data-label="Availability">{applicant.availability}</td>
+                      <td data-label="Experience">{applicant.experience}</td>
+                      <td data-label="Applied">{applicant.applied}</td>
 
-                      <td>
+                      <td data-label="Status">
                         <span
                           className={`am-status ${statusClass(
                             applicant.status
@@ -606,14 +690,11 @@ export default function ApplicationsManagement() {
                         </span>
                       </td>
 
-                      <td>
+                      <td data-label="Actions">
                         <div className="am-actions">
                           <button
                             className="am-button"
-                            disabled={
-                              applicant.status === "Shortlisted" ||
-                              !canAdvanceStatus(applicant.status, "Shortlisted")
-                            }
+                            disabled={!canUpdateStatus(applicant.status, "Shortlisted")}
                             onClick={() =>
                               updateStatus(applicant.id, "Shortlisted")
                             }
@@ -623,10 +704,7 @@ export default function ApplicationsManagement() {
 
                           <button
                             className="am-button accept"
-                            disabled={
-                              applicant.status === "Accepted" ||
-                              !canAdvanceStatus(applicant.status, "Accepted")
-                            }
+                            disabled={!canUpdateStatus(applicant.status, "Accepted")}
                             onClick={() =>
                               updateStatus(applicant.id, "Accepted")
                             }
@@ -636,10 +714,7 @@ export default function ApplicationsManagement() {
 
                           <button
                             className="am-button reject"
-                            disabled={
-                              applicant.status === "Rejected" ||
-                              !canAdvanceStatus(applicant.status, "Rejected")
-                            }
+                            disabled={!canUpdateStatus(applicant.status, "Rejected")}
                             onClick={() =>
                               updateStatus(applicant.id, "Rejected")
                             }

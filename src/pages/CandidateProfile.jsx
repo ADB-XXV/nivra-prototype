@@ -1,11 +1,13 @@
 
+"use client";
+
 import { useState } from "react";
 import Link from "next/link";
 
 export default function CandidateProfile() {
   const [status, setStatus] = useState("Under Review");
 
-  const statusOrder = ["Under Review", "Shortlisted", "Accepted", "Rejected"];
+  const terminalStatuses = ["Accepted", "Rejected"];
 
   const skills = [
     "Registration desk",
@@ -17,11 +19,27 @@ export default function CandidateProfile() {
 
   const statusClass = status.toLowerCase().replace(/\s+/g, "-");
 
-  const canAdvanceTo = (nextStatus) => {
-    const currentIndex = statusOrder.indexOf(status);
-    const nextIndex = statusOrder.indexOf(nextStatus);
+  const canUpdateStatus = (nextStatus) => {
+    if (terminalStatuses.includes(status)) {
+      return false;
+    }
 
-    return nextIndex >= currentIndex;
+    if (nextStatus === "Shortlisted") {
+      return status === "Under Review" || status === "Applied";
+    }
+
+    if (nextStatus === "Accepted") {
+      return status === "Shortlisted";
+    }
+
+    return nextStatus === "Rejected" &&
+      ["Applied", "Under Review", "Shortlisted"].includes(status);
+  };
+
+  const updateStatus = (nextStatus) => {
+    if (canUpdateStatus(nextStatus)) {
+      setStatus(nextStatus);
+    }
   };
 
   return (
@@ -35,7 +53,7 @@ export default function CandidateProfile() {
           --cp-bg: #faf5f1;
 
           width: 100%;
-          min-height: calc(100vh - 180px);
+          min-height: 100vh;
           padding: 34px clamp(20px, 5vw, 80px) 60px;
           box-sizing: border-box;
           background: var(--cp-bg);
@@ -50,7 +68,7 @@ export default function CandidateProfile() {
 
         .cp-container {
           width: 100%;
-          max-width: 1450px;
+          max-width: 1800px;
           margin: 0 auto;
         }
 
@@ -103,7 +121,7 @@ export default function CandidateProfile() {
 
         .cp-heading-text h1 {
           margin: 0;
-          font-size: clamp(27px, 2.2vw, 36px);
+          font-size: clamp(30px, 2.6vw, 44px);
           font-weight: 750;
           letter-spacing: -0.7px;
           line-height: 1.25;
@@ -209,7 +227,7 @@ export default function CandidateProfile() {
 
         .cp-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.95fr);
+          grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.95fr);
           align-items: start;
           gap: 24px;
         }
@@ -455,13 +473,15 @@ export default function CandidateProfile() {
             justify-content: flex-start;
           }
 
-          .cp-grid {
-            grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
-            gap: 18px;
-          }
-
           .cp-card {
             padding: 22px;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .cp-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 18px;
           }
         }
 
@@ -501,6 +521,10 @@ export default function CandidateProfile() {
             gap: 8px;
           }
 
+          .cp-actions .cp-button {
+            flex: 1 1 auto;
+          }
+
           .cp-status,
           .cp-button {
             min-height: 38px;
@@ -531,6 +555,28 @@ export default function CandidateProfile() {
             font-size: 13px;
           }
         }
+
+        @media (max-width: 420px) {
+          .cp-identity {
+            width: 100%;
+          }
+
+          .cp-heading-text h1 {
+            font-size: 24px;
+          }
+
+          .cp-actions {
+            width: 100%;
+          }
+
+          .cp-actions .cp-status {
+            flex-basis: 100%;
+          }
+
+          .cp-actions .cp-button {
+            flex: 1 1 calc(50% - 8px);
+          }
+        }
       `}</style>
 
       <main className="cp-page">
@@ -556,24 +602,24 @@ export default function CandidateProfile() {
 
               <button
                 className="cp-button"
-                disabled={status === "Shortlisted" || !canAdvanceTo("Shortlisted")}
-                onClick={() => setStatus("Shortlisted")}
+                disabled={!canUpdateStatus("Shortlisted")}
+                onClick={() => updateStatus("Shortlisted")}
               >
                 Shortlist
               </button>
 
               <button
                 className="cp-button accept"
-                disabled={status === "Accepted" || !canAdvanceTo("Accepted")}
-                onClick={() => setStatus("Accepted")}
+                disabled={!canUpdateStatus("Accepted")}
+                onClick={() => updateStatus("Accepted")}
               >
                 Accept
               </button>
 
               <button
                 className="cp-button reject"
-                disabled={status === "Rejected" || !canAdvanceTo("Rejected")}
-                onClick={() => setStatus("Rejected")}
+                disabled={!canUpdateStatus("Rejected")}
+                onClick={() => updateStatus("Rejected")}
               >
                 Reject
               </button>
