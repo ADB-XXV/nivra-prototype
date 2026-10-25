@@ -8,6 +8,8 @@
 //
 // Must be rendered inside <div className="nv"> (see globals.css).
 
+import Link from "next/link";
+
 const LINKS = {
   public: [
     { label: "Find jobs", path: "/browsejobs" },
@@ -34,39 +36,69 @@ const LINKS = {
 export default function Navbar({
   role = "public",
   active = "",
-  onNavigate = (p) => window.location.assign(p),
+  onNavigate,
 }) {
   const links = LINKS[role] || LINKS.public;
+
+  function handleNavigation(event, path) {
+    if (onNavigate) {
+      event.preventDefault();
+      onNavigate(path);
+    }
+  }
 
   return (
     <nav className="top" aria-label="Main">
       <div className="w">
-        <button className="logo" onClick={() => onNavigate("/")}>
+        <Link
+          className="logo"
+          href="/"
+          onClick={(event) => handleNavigation(event, "/")}
+        >
           Nivra<i />
-        </button>
+        </Link>
 
         <div className="links">
           {links.map((l) => (
-            <a
+            <Link
               key={l.path}
+              href={l.path}
               className={active === l.path ? "on" : ""}
               aria-current={active === l.path ? "page" : undefined}
-              onClick={() => onNavigate(l.path)}
+              onClick={(event) => handleNavigation(event, l.path)}
             >
               {l.label}
-            </a>
+            </Link>
           ))}
         </div>
 
         {role === "public" ? (
           <>
-            <button className="btn s sm" onClick={() => onNavigate("/login?mode=login")}>Log in</button>
-            <button className="btn sm" onClick={() => onNavigate("/login?mode=signup")}>Sign up</button>
+            <Link
+              className="btn s sm"
+              href="/login?mode=login"
+              onClick={(event) => handleNavigation(event, "/login?mode=login")}
+            >
+              Log in
+            </Link>
+            <Link
+              className="btn sm"
+              href="/login?mode=signup"
+              onClick={(event) => handleNavigation(event, "/login?mode=signup")}
+            >
+              Sign up
+            </Link>
           </>
         ) : (
           <>
             <span className="tag">{role === "student" ? "Student" : "Employer"}</span>
-            <button className="btn g sm" onClick={() => onNavigate("/")}>Log out</button>
+            <Link
+              className="btn g sm"
+              href="/"
+              onClick={(event) => handleNavigation(event, "/")}
+            >
+              Log out
+            </Link>
           </>
         )}
       </div>

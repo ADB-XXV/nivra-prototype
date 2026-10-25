@@ -4,6 +4,7 @@
    Import once per page: import "../styles/globals.css"; */
 
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 
 .nv {
   /* Palette */
@@ -54,10 +55,10 @@
 /* Navbar */
 .nv .top { background: var(--sf); border-bottom: 1px solid var(--ln); position: sticky; top: 0; z-index: 5; }
 .nv .top .w { display: flex; align-items: center; gap: 20px; height: 56px; }
-.nv .logo { font-weight: 700; font-size: 1.25rem; color: var(--btn); background: none; border: 0; font-family: inherit; padding: 0; cursor: pointer; letter-spacing: -0.02em; }
+.nv .logo { font-weight: 700; font-size: 1.25rem; color: var(--btn); background: none; border: 0; font-family: inherit; padding: 0; cursor: pointer; letter-spacing: -0.02em; text-decoration: none; }
 .nv .logo i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ter); margin-left: 2px; }
 .nv .links { display: flex; gap: 2px; flex: 1; overflow-x: auto; }
-.nv .links a { padding: 6px 10px; border-radius: 6px; color: var(--mu); font-weight: 500; cursor: pointer; white-space: nowrap; }
+.nv .links a { padding: 6px 10px; border-radius: 6px; color: var(--mu); font-weight: 500; cursor: pointer; white-space: nowrap; text-decoration: none; }
 .nv .links a.on { background: var(--tl); color: var(--tx); }
 .nv .tag { font-size: 0.72rem; background: var(--sl); color: var(--sd); padding: 2px 8px; border-radius: 4px; font-weight: 700; white-space: nowrap; }
 
@@ -65,7 +66,7 @@
 .nv .foot { border-top: 1px solid var(--ln); padding: 22px 0; font-size: 0.85rem; color: var(--mu); margin-top: 40px; }
 
 /* Buttons */
-.nv .btn { background: var(--btn); color: var(--btx); border: 1px solid var(--btn); padding: 9px 16px; border-radius: 6px; font: inherit; font-weight: 500; cursor: pointer; display: inline-block; }
+.nv .btn { background: var(--btn); color: var(--btx); border: 1px solid var(--btn); padding: 9px 16px; border-radius: 6px; font: inherit; font-weight: 500; cursor: pointer; display: inline-block; text-decoration: none; }
 .nv .btn.s { background: transparent; color: var(--tx); border-color: var(--ln); }
 .nv .btn.g { background: none; border-color: transparent; color: var(--sd); padding: 6px 8px; }
 .nv .btn.sm { padding: 5px 10px; font-size: 0.85rem; }
