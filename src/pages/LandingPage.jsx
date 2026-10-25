@@ -3,18 +3,7 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-
-// Sample data only, not real vacancies.
-// Later you can move this into src/data/ and share it with BrowseJobs.
-const JOBS = [
-  { id: 1, title: "Event Assistant", employer: "Malabar Events", city: "Kozhikode", date: "Sat, 24 Oct", hours: "9:00 am – 5:00 pm", pay: 800, type: "One day" },
-  { id: 2, title: "Catering Helper", employer: "Spice Route Caterers", city: "Kochi", date: "Sun, 25 Oct", hours: "11:00 am – 4:00 pm", pay: 700, type: "One day" },
-  { id: 3, title: "Retail Promoter", employer: "Urban Cart Stores", city: "Thrissur", date: "Fri, 23 – Sun, 25 Oct", hours: "10:00 am – 6:00 pm", pay: 900, type: "Short term" },
-  { id: 4, title: "Campus Event Crew", employer: "Aarambh Fest Team", city: "Kozhikode", date: "Mon, 26 Oct", hours: "8:00 am – 6:00 pm", pay: 600, type: "One day" },
-  { id: 5, title: "Maths Tutor, Class 10", employer: "BrightPath Tuitions", city: "Malappuram", date: "Wed, 28 Oct", hours: "5:00 pm – 7:00 pm", pay: 500, type: "One day" },
-  { id: 6, title: "Delivery Partner", employer: "QuickBasket", city: "Bengaluru", date: "Sat, 31 Oct", hours: "10:00 am – 6:00 pm", pay: 850, type: "One day" },
-  { id: 7, title: "Banquet Server", employer: "Hotel Lakeview", city: "Kochi", date: "Sat, 31 Oct", hours: "6:00 pm – 11:00 pm", pay: 650, type: "Short term" },
-];
+import JOBS from "../data/jobs";
 
 const CATEGORIES = ["Event assistance", "Catering", "Retail", "Tutoring", "Delivery", "Campus events", "Hospitality"];
 
@@ -28,8 +17,8 @@ function JobRow({ job, onView, saved, onToggleSave }) {
     <div className="jr">
       <div className="m">
         <b><a onClick={() => onView(job.id)}>{job.title}</a></b>
-        <div className="mu">{job.employer} · {job.city}</div>
-        <div className="mu" style={{ fontSize: ".85rem" }}>{job.date} · {job.hours} · {job.type}</div>
+        <div className="mu">{job.company} · {job.location}</div>
+        <div className="mu" style={{ fontSize: ".85rem" }}>{job.dateLabel} · {job.time} · {job.type}</div>
       </div>
       <div className="pay">₹{job.pay}<small>/day</small></div>
       {onToggleSave && (
@@ -46,11 +35,11 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
   const [city, setCity] = useState("");
   const [saved, setSaved] = useState([6]);
 
-  const viewJob = (id) => onNavigate(`/jobs/${id}`);
+  const viewJob = (id) => onNavigate(`/jobdetails/${id}`);
   const toggleSave = (id) => setSaved((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   const search = (e) => {
     e.preventDefault();
-    onNavigate(`/jobs?q=${encodeURIComponent(title)}&loc=${encodeURIComponent(city)}`);
+    onNavigate(`/browsejobs?q=${encodeURIComponent(title)}&loc=${encodeURIComponent(city)}`);
   };
 
   return (
@@ -79,7 +68,7 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
               <div className="row" style={{ marginTop: 12 }}>
                 <button type="submit" className="btn">Search jobs</button>
                 <button type="button" className="btn s" onClick={() => onNavigate("/login?role=employer&mode=signup")}>Hire workers</button>
-                <button type="button" className="btn g" onClick={() => onNavigate("/jobs")}>Find jobs →</button>
+                <button type="button" className="btn g" onClick={() => onNavigate("/browsejobs")}>Find jobs →</button>
               </div>
             </form>
           </div>
@@ -92,7 +81,7 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
         <section className="w">
           <h2>Browse by category</h2>
           {CATEGORIES.map((c) => (
-            <button key={c} className="ch" onClick={() => onNavigate(`/jobs?category=${encodeURIComponent(c)}`)}>{c}</button>
+            <button key={c} className="ch" onClick={() => onNavigate(`/browsejobs?category=${encodeURIComponent(c)}`)}>{c}</button>
           ))}
         </section>
 

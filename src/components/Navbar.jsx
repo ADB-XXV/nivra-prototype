@@ -12,11 +12,11 @@ import Link from "next/link";
 
 const LINKS = {
   public: [
-    { label: "Find jobs", path: "/jobs" },
+    { label: "Find jobs", path: "/browsejobs" },
     { label: "For employers", path: "/login?role=employer&mode=signup" },
   ],
   student: [
-    { label: "Browse jobs", path: "/jobs" },
+    { label: "Browse jobs", path: "/browsejobs" },
     { label: "Saved", path: "/saved" },
     { label: "My applications", path: "/applications" },
     { label: "Dashboard", path: "/student/dashboard" },
