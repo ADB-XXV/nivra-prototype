@@ -2,57 +2,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import Navbar from "../components/Navbar";
+import { INITIAL_APPLICANTS } from "../data/applicants";
 
 export default function ApplicationsManagement() {
   const terminalStatuses = ["Accepted", "Rejected"];
 
-  const [applicants, setApplicants] = useState([
-    {
-      id: 1,
-      name: "Anjali Nair",
-      skills: "Registration desk, Crowd handling",
-      availability: "Sat 24 Oct, full day",
-      experience: "2 college fests",
-      applied: "16 Oct",
-      status: "Under Review",
-    },
-    {
-      id: 2,
-      name: "Rohit Das",
-      skills: "Stage setup, Sound basics",
-      availability: "Sat 24 Oct, full day",
-      experience: "1 wedding crew job",
-      applied: "17 Oct",
-      status: "Applied",
-    },
-    {
-      id: 3,
-      name: "Fathima Shereen",
-      skills: "Guest welcome, Billing",
-      availability: "Sat 24 Oct, 9 am - 3 pm",
-      experience: "Retail intern, 2 months",
-      applied: "15 Oct",
-      status: "Shortlisted",
-    },
-    {
-      id: 4,
-      name: "Arjun Menon",
-      skills: "Event support, Photography",
-      availability: "Sat 24 Oct, full day",
-      experience: "3 events",
-      applied: "18 Oct",
-      status: "Applied",
-    },
-    {
-      id: 5,
-      name: "Neha Pillai",
-      skills: "Registration desk, Hindi, English",
-      availability: "Sat 24 Oct, from 1 pm",
-      experience: "1 college fest",
-      applied: "14 Oct",
-      status: "Applied",
-    },
-  ]);
+  const [applicants, setApplicants] = useState(() => [...INITIAL_APPLICANTS]);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
@@ -115,7 +72,8 @@ export default function ApplicationsManagement() {
   }
 
   return (
-    <>
+    <div className="nv">
+      <Navbar role="employer" active="/employer/applicants" />
       <style>{`
         .am-page {
           --am-ink: #302626;
@@ -125,11 +83,12 @@ export default function ApplicationsManagement() {
           --am-bg: #faf5f1;
 
           width: 100%;
-          min-height: 100vh;
+          min-height: calc(100vh - 56px);
           padding: 42px clamp(20px, 4vw, 64px) 60px;
           box-sizing: border-box;
           background: var(--am-bg);
           color: var(--am-ink);
+          font-family: "Manrope", "DM Sans", system-ui, sans-serif;
         }
 
         .am-page *,
@@ -351,6 +310,23 @@ export default function ApplicationsManagement() {
         .am-candidate strong {
           color: #332827;
           font-size: 15px;
+        }
+
+        .am-candidate-name {
+          color: inherit;
+          text-decoration: none;
+        }
+
+        .am-candidate-name:hover {
+          color: var(--am-accent);
+          text-decoration: underline;
+          text-underline-offset: 3px;
+        }
+
+        .am-candidate-name:focus-visible {
+          border-radius: 2px;
+          outline: 2px solid var(--am-accent);
+          outline-offset: 3px;
         }
 
         .am-status {
@@ -671,7 +647,14 @@ export default function ApplicationsManagement() {
                               .slice(0, 2)
                               .join("")}
                           </div>
-                          <strong>{applicant.name}</strong>
+                          <strong>
+                            <Link
+                              className="am-candidate-name"
+                              href={`/candidate-profile?id=${applicant.id}`}
+                            >
+                              {applicant.name}
+                            </Link>
+                          </strong>
                         </div>
                       </td>
 
@@ -749,6 +732,6 @@ export default function ApplicationsManagement() {
           </section>
         </div>
       </main>
-    </>
+    </div>
   );
 }

@@ -1,0 +1,73 @@
+export const INITIAL_APPLICANTS = [
+  {
+    id: 1,
+    name: "Anjali Nair",
+    skills: "Registration desk, Crowd handling",
+    profileSkills: [
+      "Registration desk",
+      "Crowd handling",
+      "Malayalam",
+      "English",
+      "Hindi",
+    ],
+    availability: "Sat 24 Oct, full day",
+    experience: "2 college fests",
+    applied: "16 Oct",
+    status: "Under Review",
+    college: "St. Joseph’s College, Devagiri",
+    message:
+      "I volunteered at the registration desk for two college fests and can reach the venue by 8:30 am.",
+  },
+  {
+    id: 2,
+    name: "Rohit Das",
+    skills: "Stage setup, Sound basics",
+    profileSkills: ["Stage setup", "Sound basics"],
+    availability: "Sat 24 Oct, full day",
+    experience: "1 wedding crew job",
+    applied: "17 Oct",
+    status: "Applied",
+    college: "College details not provided",
+    message:
+      "I have experience setting up event stages and assisting with basic sound equipment.",
+  },
+  {
+    id: 3,
+    name: "Fathima Shereen",
+    skills: "Guest welcome, Billing",
+    profileSkills: ["Guest welcome", "Billing"],
+    availability: "Sat 24 Oct, 9 am - 3 pm",
+    experience: "Retail intern, 2 months",
+    applied: "15 Oct",
+    status: "Shortlisted",
+    college: "College details not provided",
+    message:
+      "My retail internship helped me build customer service and billing experience, and I enjoy welcoming guests.",
+  },
+  {
+    id: 4,
+    name: "Arjun Menon",
+    skills: "Event support, Photography",
+    profileSkills: ["Event support", "Photography"],
+    availability: "Sat 24 Oct, full day",
+    experience: "3 events",
+    applied: "18 Oct",
+    status: "Applied",
+    college: "College details not provided",
+    message:
+      "I have supported three events and can also help capture photographs during the day.",
+  },
+  {
+    id: 5,
+    name: "Neha Pillai",
+    skills: "Registration desk, Hindi, English",
+    profileSkills: ["Registration desk", "Hindi", "English"],
+    availability: "Sat 24 Oct, from 1 pm",
+    experience: "1 college fest",
+    applied: "14 Oct",
+    status: "Applied",
+    college: "College details not provided",
+    message:
+      "I have helped at a college fest registration desk and can assist guests in Hindi and English.",
+  },
+];

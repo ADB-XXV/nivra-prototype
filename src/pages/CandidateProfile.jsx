@@ -3,19 +3,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Navbar from "../components/Navbar";
+import { INITIAL_APPLICANTS } from "../data/applicants";
 
-export default function CandidateProfile() {
-  const [status, setStatus] = useState("Under Review");
-
+export default function CandidateProfile({ candidateId }) {
+  const candidate =
+    INITIAL_APPLICANTS.find(
+      (applicant) => String(applicant.id) === String(candidateId)
+    ) ?? INITIAL_APPLICANTS[0];
+  const [status, setStatus] = useState(candidate.status);
   const terminalStatuses = ["Accepted", "Rejected"];
-
-  const skills = [
-    "Registration desk",
-    "Crowd handling",
-    "Malayalam",
-    "English",
-    "Hindi",
-  ];
+  const skills = candidate.profileSkills;
+  const initials = candidate.name
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("");
 
   const statusClass = status.toLowerCase().replace(/\s+/g, "-");
 
@@ -43,7 +46,8 @@ export default function CandidateProfile() {
   };
 
   return (
-    <>
+    <div className="nv">
+      <Navbar role="employer" active="/employer/applicants" />
       <style>{`
         .cp-page {
           --cp-ink: #302626;
@@ -53,11 +57,12 @@ export default function CandidateProfile() {
           --cp-bg: #faf5f1;
 
           width: 100%;
-          min-height: 100vh;
+          min-height: calc(100vh - 56px);
           padding: 34px clamp(20px, 5vw, 80px) 60px;
           box-sizing: border-box;
           background: var(--cp-bg);
           color: var(--cp-ink);
+          font-family: "Manrope", "DM Sans", system-ui, sans-serif;
         }
 
         .cp-page *,
@@ -587,11 +592,11 @@ export default function CandidateProfile() {
 
           <header className="cp-header">
             <div className="cp-identity">
-              <div className="cp-avatar">AN</div>
+              <div className="cp-avatar">{initials}</div>
 
               <div className="cp-heading-text">
-                <h1>Anjali Nair</h1>
-                <p>St. Joseph’s College, Devagiri</p>
+                <h1>{candidate.name}</h1>
+                <p>{candidate.college}</p>
               </div>
             </div>
 
@@ -642,8 +647,7 @@ export default function CandidateProfile() {
               </div>
 
               <blockquote className="cp-message">
-                “I volunteered at the registration desk for two
-                college fests and can reach the venue by 8:30 am.”
+                “{candidate.message}”
               </blockquote>
 
               <div className="cp-detail">
@@ -659,18 +663,18 @@ export default function CandidateProfile() {
 
               <div className="cp-detail">
                 <h3>Experience</h3>
-                <p className="cp-value">2 college fests</p>
+                <p className="cp-value">{candidate.experience}</p>
               </div>
 
               <div className="cp-detail">
                 <h3>Availability</h3>
-                <p className="cp-value">Sat 24 Oct, full day</p>
+                <p className="cp-value">{candidate.availability}</p>
               </div>
 
               <div className="cp-detail">
                 <h3>College</h3>
                 <p className="cp-value">
-                  St. Joseph’s College, Devagiri
+                  {candidate.college}
                 </p>
               </div>
             </section>
@@ -752,6 +756,6 @@ export default function CandidateProfile() {
           </div>
         </div>
       </main>
-    </>
+    </div>
   );
 }
