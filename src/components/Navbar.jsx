@@ -27,7 +27,6 @@ const LINKS = {
     { label: "Post a job", path: "/employer/post-job" },
     { label: "Applicants", path: "/employer/applicants" },
     { label: "Matching", path: "/employer/matching" },
-    { label: "Staffing", path: "/employer/staffing" },
     { label: "Plans", path: "/pricing" },
     { label: "Profile", path: "/employer/profile" },
   ],

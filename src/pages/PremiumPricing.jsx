@@ -1,4 +1,5 @@
 import React from "react";
+import EmployerNavbar from "../components/EmployerNavbar";
 
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -104,6 +105,7 @@ export default function PremiumPricing() {
   return (
     <div className="nivra-plans">
       <style>{styles}</style>
+      <EmployerNavbar active="/pricing" />
       <main className="content">
         <h1>Simple plans for better hiring</h1>
         <p className="subtitle">Choose the tools that fit your hiring needs. You can change plans at any time.</p>

@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import EmployerNavbar from "../components/EmployerNavbar";
 // import Footer from "../components/Footer";
 
 // Navbar is intentionally not rendered here. Place it above this page's output
@@ -112,6 +113,7 @@ export default function MatchingResults({ onNavigate = (p) => window.location.as
   return (
     <div className="nv">
       <style>{css}</style>
+      <EmployerNavbar active="/employer/matching" />
 
       <main className="w" style={{ padding: "28px 20px 8px" }}>
         <div className="mr-head">

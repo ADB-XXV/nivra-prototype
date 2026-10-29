@@ -11,9 +11,16 @@ const NAV = [
 ];
 
 const CSS = `
-.nv-header { background: #fff; border-bottom: 1px solid #e6dcd6; }
+.nv-header {
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #fff;
+  border-bottom: 1px solid #e6dcd6;
+}
 .nv-header-inner {
-  max-width: 1160px; margin: 0 auto; padding: 10px 24px;
+  height: 55px; max-width: 1160px; margin: 0 auto; padding: 0 24px;
   display: flex; align-items: center; gap: 8px;
 }
 .nv-logo { font-size: 20px; font-weight: 700; margin-right: 18px; letter-spacing: .2px; }
@@ -35,6 +42,8 @@ const CSS = `
 }
 .nv-logout { color: #7a6b6b; text-decoration: none; font-size: 15px; }
 @media (max-width: 760px) {
+  .nv-header { height: auto; }
+  .nv-header-inner { height: auto; min-height: 55px; }
   .nv-header-inner { flex-wrap: wrap; }
   .nv-nav { order: 3; width: 100%; flex-basis: 100%; }
 }

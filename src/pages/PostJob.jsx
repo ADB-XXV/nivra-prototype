@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import "../styles/EmployerDashboard.css";
+
 
 export default function PostJob({ onSubmit, onCancel }) {
   const [form, setForm] = useState({

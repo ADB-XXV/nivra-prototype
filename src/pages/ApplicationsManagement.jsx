@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import Navbar from "../components/Navbar";
+import EmployerNavbar from "../components/EmployerNavbar";
 import { INITIAL_APPLICANTS } from "../data/applicants";
 
 export default function ApplicationsManagement() {
@@ -73,7 +73,7 @@ export default function ApplicationsManagement() {
 
   return (
     <div className="nv">
-      <Navbar role="employer" active="/employer/applicants" />
+      <EmployerNavbar active="/employer/applicants" />
       <style>{`
         .am-page {
           --am-ink: #302626;

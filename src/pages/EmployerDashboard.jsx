@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import "./PostJob";
 import PostJob from "./PostJob";
 import "../styles/EmployerDashboard.css";
+import EmployerNavbar from "../components/EmployerNavbar";
 
 const initialJobs = [
   {
@@ -74,6 +75,7 @@ export default function EmployerDashboard() {
 
   return (
     <div className="employer-page">
+      <EmployerNavbar active="/employer/dashboard" />
       <main className="employer-main">
         {notice && (
           <div className="notice" role="status">

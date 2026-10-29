@@ -192,8 +192,7 @@ export default function StudentProfile() {
 
       <footer className="nivra-footer">
         <strong>Nivra</strong> · Find work for a day. Build experience for
-        tomorrow. Prototype with sample data; employers, jobs and students
-        are fictional.
+        tomorrow.
       </footer>
     </div>
   );
