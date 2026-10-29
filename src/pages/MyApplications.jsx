@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import StudentNavbar from "../components/StudentNavbar";
 
 const INITIAL_APPLICATIONS = [
   { id: 1, jobId: 1, title: "Event Assistant", company: "Malabar Events", city: "Kozhikode", schedule: "Sat, 24 Oct · 9:00 am – 5:00 pm · One day", pay: 800, applied: "16 Oct", status: "Under Review" },
@@ -37,7 +38,6 @@ const CSS = `
   color: var(--ink);
   font-family: "DejaVu Sans", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   font-size: 15px;
-  border-top: 6px solid var(--brand);
   box-sizing: border-box;
 }
 .nv-root *, .nv-root *::before, .nv-root *::after { box-sizing: inherit; }
@@ -120,7 +120,6 @@ const CSS = `
 
 .nv-empty { padding: 36px 0; text-align: center; color: var(--muted); }
 
-.nv-footer { border-top: 1px solid var(--line); }
 .nv-footer p {
   max-width: 1160px; margin: 0 auto; padding: 22px 24px;
   color: var(--muted); font-size: 14px;
@@ -153,38 +152,7 @@ export default function MyApplications({ onNavigate = (path) => window.location.
     <div className="nv-root">
       <style>{CSS}</style>
 
-      <header className="nv-header">
-        <div className="nv-header-inner">
-          <span className="nv-logo">
-            Nivra<span className="nv-logo-dot" />
-          </span>
-          <nav className="nv-nav" aria-label="Main">
-            {NAV.map(([item, path]) => (
-              <a
-                key={path}
-                href={path}
-                className={path === "/applications" ? "active" : ""}
-                aria-current={path === "/applications" ? "page" : undefined}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate(path);
-                }}
-              >
-                {item}
-              </a>
-            ))}
-          </nav>
-          <div className="nv-right">
-            <span className="nv-role">Student</span>
-            <a href="/" className="nv-logout" onClick={(e) => {
-              e.preventDefault();
-              onNavigate("/");
-            }}>
-              Log out
-            </a>
-          </div>
-        </div>
-      </header>
+      <StudentNavbar active="/applications" />
 
       <main className="nv-main">
         <h1 className="nv-title">My applications</h1>
@@ -240,8 +208,7 @@ export default function MyApplications({ onNavigate = (path) => window.location.
 
       <footer className="nv-footer">
         <p>
-          <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow. Prototype
-          with sample data; employers, jobs and students are fictional.
+          <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow. 
         </p>
       </footer>
     </div>

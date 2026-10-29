@@ -727,7 +727,7 @@ export default function ApplicationsManagement() {
               <span>
                 {filteredApplicants.length} of {applicants.length} results
               </span>
-              <span>Prototype · Sample application data</span>
+              <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
             </footer>
           </section>
         </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import JOBS from "../data/jobs";
+import StudentNavbar from "../components/StudentNavbar";
 
 /* =====================================================================
    Nivra · Page 3 of 16 · Browse jobs
@@ -51,22 +52,7 @@ export default function BrowseJobs({
     <div className="nivra">
       <style>{css}</style>
 
-      {/* Header */}
-      <header className="header">
-        <div className="header-inner">
-          <a className="logo" href="/">Nivra<i /></a>
-          <nav className="nav">
-            <a href="/browsejobs" className={activeTab === "Browse jobs" ? "active" : ""}>Browse jobs</a>
-            <a href="#/saved">Saved</a>
-            <a href="/applications">My applications</a>
-            <a href="#/dashboard">Dashboard</a>
-            <a href="#/profile">Profile</a>
-          </nav>
-          <span className="spacer" />
-          <span className="badge-student">Student</span>
-          <a className="logout" href="/">Log out</a>
-        </div>
-      </header>
+      <StudentNavbar active="/browsejobs" />
 
       {/* Content */}
       <main>
@@ -138,7 +124,7 @@ export default function BrowseJobs({
 
       {/* Footer */}
       <footer className="footer">
-        <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow. Prototype with sample data; employers, jobs and students are fictional.</p>
+        <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
       </footer>
     </div>
   );

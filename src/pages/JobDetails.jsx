@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import StudentNavbar from "../components/StudentNavbar";
 
 /* =====================================================================
    Nivra · Page 4 of 16 · Job details and apply
@@ -154,22 +155,7 @@ export default function JobDetail({
     <div className="nivra">
       <style>{css}</style>
 
-      {/* Header */}
-      <header className="header">
-        <div className="header-inner">
-          <a className="logo" href="/">Nivra<i /></a>
-          <nav className="nav">
-            <a href="/browsejobs">Browse jobs</a>
-            <a href="#/saved">Saved</a>
-            <a href="#/applications">My applications</a>
-            <a href="#/dashboard">Dashboard</a>
-            <a href="#/profile">Profile</a>
-          </nav>
-          <span className="spacer" />
-          <span className="badge-student">Student</span>
-          <a className="logout" href="/">Log out</a>
-        </div>
-      </header>
+      <StudentNavbar active="/browsejobs" />
 
       {/* Content */}
       <main>
@@ -236,7 +222,7 @@ export default function JobDetail({
 
       {/* Footer */}
       <footer className="footer">
-        <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow. Prototype with sample data; employers, jobs and students are fictional.</p>
+        <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow .</p>
       </footer>
     </div>
   );

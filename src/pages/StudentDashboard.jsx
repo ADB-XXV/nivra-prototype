@@ -2,10 +2,13 @@
 
 import React from "react";
 import "../styles/StudentDashboard.css";
+import StudentNavbar from "../components/StudentNavbar";
 
 export default function StudentDashboard() {
   return (
     <div className="student-dashboard">
+      <StudentNavbar active="/student/dashboard" />
+      <div className="dashboard-content">
 
       {/* Welcome section */}
       <section className="dashboard-welcome">
@@ -139,6 +142,7 @@ export default function StudentDashboard() {
         Nivra · Find work for a day. Build experience for tomorrow.
       </footer>
 
+      </div>
     </div>
   );
 }

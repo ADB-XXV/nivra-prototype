@@ -197,7 +197,7 @@ export default function EmployerDashboard() {
       </main>
 
       <footer className="employer-footer">
-        <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow. Prototype with sample data; employers, jobs and students are fictional.
+        <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
       </footer>
     </div>
   );

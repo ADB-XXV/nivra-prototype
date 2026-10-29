@@ -97,6 +97,38 @@
 .nv .step { display: flex; gap: 10px; margin-bottom: 10px; }
 .nv .step b { width: 24px; height: 24px; border-radius: 50%; background: var(--ter); color: #2d2124; display: grid; place-items: center; font-size: 0.8rem; flex: none; }
 
+/* Keep page wording aligned with the landing-page typography. */
+body,
+body * {
+  font-family: "DM Sans", system-ui, sans-serif !important;
+}
+
+body {
+  font-size: 15px !important;
+}
+
+body * {
+  font-size: inherit !important;
+}
+
+body h1 {
+  font-size: 2.3rem !important;
+}
+
+body h2 {
+  font-size: 1.35rem !important;
+}
+
+body h3 {
+  font-size: 1rem !important;
+}
+
+@media (max-width: 760px) {
+  body h1 {
+    font-size: 1.8rem !important;
+  }
+}
+
 @media (max-width: 760px) {
   .nv .hero, .nv .e2, .nv .f2 { grid-template-columns: 1fr; }
   .nv h1 { font-size: 1.8rem; }

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import "../styles/StudentProfile.css";
+import StudentNavbar from "../components/StudentNavbar";
 
 export default function StudentProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -34,26 +35,7 @@ export default function StudentProfile() {
 
   return (
     <div className="nivra-profile">
-      <header className="nivra-header">
-        <h2 className="nivra-logo">
-          Nivra<span>.</span>
-        </h2>
-
-        <nav>
-          <a href="/BrowseJobs">Browse jobs</a>
-          <a href="/SavedJobs">Saved</a>
-          <a href="/MyApplications">My applications</a>
-          <a href="/studentdashboard">Dashboard</a>
-          <a href="/studentprofile" className="active">
-            Profile
-          </a>
-        </nav>
-
-        <div className="header-right">
-          <span className="student-badge">Student</span>
-          <a href="/Login">Log out</a>
-        </div>
-      </header>
+      <StudentNavbar active="/student/profile" />
 
       <main className="profile-container">
         <div className="profile-grid">
