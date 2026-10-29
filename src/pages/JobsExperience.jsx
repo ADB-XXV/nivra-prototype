@@ -1,17 +1,111 @@
+
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import JOBS from "../data/jobs";
+import { supabase } from "../lib/supabase";
 import BrowseJobs from "./BrowseJobs";
 import JobDetails from "./JobDetails";
 
-function JobsExperience({ initialJobId = null, initialBackPath = "/browsejobs" }) {
+function formatDate(date) {
+  if (!date) return "Date not set";
+
+  return new Date(`${date}T12:00:00`).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+
+function convertJob(job) {
+  return {
+    ...job,
+    id: job.id,
+    company: job.employer?.business || job.employer?.full_name || "Employer",
+    city: job.location,
+    when: job.date
+      ? new Date(`${job.date}T12:00:00`).toLocaleDateString("en-GB", {
+          weekday: "short",
+          day: "2-digit",
+          month: "short",
+        })
+      : "Date not set",
+    dateLabel: job.date
+      ? new Date(`${job.date}T12:00:00`).toLocaleDateString("en-GB", {
+          weekday: "short",
+          day: "2-digit",
+          month: "short",
+        })
+      : "Date not set",
+    time: job.hours || "Hours not specified",
+    pay: Number(job.amount),
+    about: job.description,
+    resp: [job.description],
+    skills: job.skills || "Not specified",
+    elig: "Check job requirements with the employer",
+    workers: Number(job.workers),
+    category: job.category,
+  };
+}
+
+
+export default function JobsExperience({
+  initialJobId = null,
+  initialBackPath = "/browsejobs",
+}) {
   const router = useRouter();
-  const initialJob = JOBS.find((job) => job.id === Number(initialJobId));
-  const selectedJob = initialJob || null;
-  const [savedJobs, setSavedJobs] = useState([6]);
+
+  const [jobs, setJobs] = useState([]);
+  const [savedJobs, setSavedJobs] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadJobs() {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        router.replace("/login?mode=login");
+        return;
+      }
+
+      const { data, error: jobsError } = await supabase
+        .from("jobs")
+        .select(`
+          *,
+          employer:profiles!jobs_employer_id_fkey (
+            business,
+            full_name
+          )
+        `)
+        .eq("status", "Active")
+        .order("created_at", { ascending: false });
+
+      if (!active) return;
+
+      if (jobsError) {
+        console.error("Error loading jobs:", jobsError);
+        setError("Could not load jobs. Please try again.");
+      } else {
+        setJobs((data || []).map(convertJob));
+      }
+
+      setLoading(false);
+    }
+
+    loadJobs();
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   function toggleSaved(jobId) {
     setSavedJobs((previous) =>
@@ -23,6 +117,25 @@ function JobsExperience({ initialJobId = null, initialBackPath = "/browsejobs" }
 
   function goBackToJobs() {
     router.push(initialBackPath);
+  }
+
+  const selectedJob = initialJobId
+    ? jobs.find((job) => String(job.id) === String(initialJobId))
+    : null;
+
+  if (loading) {
+    return <div className="nv">Loading jobs...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="nv">
+        <p role="alert">{error}</p>
+        <button onClick={() => window.location.reload()}>
+          Try again
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -39,7 +152,7 @@ function JobsExperience({ initialJobId = null, initialBackPath = "/browsejobs" }
         />
       ) : (
         <BrowseJobs
-          jobs={JOBS}
+          jobs={jobs}
           onView={(job) => router.push(`/jobdetails/${job.id}`)}
           savedJobs={savedJobs}
           toggleSaved={toggleSaved}
@@ -49,5 +162,3 @@ function JobsExperience({ initialJobId = null, initialBackPath = "/browsejobs" }
     </div>
   );
 }
-
-export default JobsExperience;

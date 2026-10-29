@@ -43,10 +43,13 @@ export default function BrowseJobs({
         if (date === "week" && Math.min(...days) > 30) return false;
         return true;
       })
-      .sort((a, b) => (sort === "pay"
-        ? b.pay - a.pay
-        : Math.min(...jobDays(a)) - Math.min(...jobDays(b)) || a.id - b.id));
-  }, [availableJobs, q, loc, sort, category, date, minPay, type]);
+      .sort((a, b) =>
+  sort === "pay"
+    ? b.pay - a.pay
+    : Math.min(...jobDays(a)) - Math.min(...jobDays(b)) ||
+      String(a.id).localeCompare(String(b.id))
+);
+}, [availableJobs, q, loc, sort, category, date, minPay, type]);
 
   return (
     <div className="nivra">

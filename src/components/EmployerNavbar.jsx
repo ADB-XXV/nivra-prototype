@@ -87,10 +87,10 @@ const CSS = `
 `;
 
 export default function EmployerNavbar({ active = "" }) {
-  return (
-    <>
-      <style>{CSS}</style>
-      <nav className="employer-nav" aria-label="Main employer navigation">
+   return (
+  <>
+    <style jsx global>{CSS}</style>
+    <nav className="employer-nav" aria-label="Main employer navigation">
       <div className="employer-nav-inner">
         <Link className="employer-nav-logo" href="/">
           Nivra<i />

@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 import StudentNavbar from "../components/StudentNavbar";
 import Footer from "../components/Footer";
 
@@ -33,6 +34,52 @@ const css = `
 const statusClass = (s) => s.toLowerCase().replace(" ", "-");
 
 export default function StudentDashboard() {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfile() {
+      const { data: { user }, error: authError } =
+        await supabase.auth.getUser();
+
+      if (authError || !user) {
+        window.location.replace("/login?mode=login");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, role")
+        .eq("id", user.id)
+        .single();
+
+      if (!active) return;
+
+      if (error) {
+        setProfileError("Could not load your profile. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      if (data.role !== "student") {
+        window.location.replace("/employer/dashboard");
+        return;
+      }
+
+      setProfile(data);
+      setLoading(false);
+    }
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div className="nv">
       <style>{css}</style>
@@ -42,7 +89,14 @@ export default function StudentDashboard() {
         {/* Welcome */}
         <section className="sd-head">
           <div>
-            <h1>Welcome back, Anjali</h1>
+            <h1>
+  {loading
+    ? "Loading your dashboard..."
+    : `Welcome back, ${profile?.full_name || "there"}`}
+</h1>
+{profileError && (
+  <p role="alert" className="mu">{profileError}</p>
+)}
             <p className="mu" style={{ margin: 0 }}>Here’s what’s happening with your job search.</p>
           </div>
           <div className="row">
