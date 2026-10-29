@@ -570,7 +570,7 @@ export default function ApplicationsManagement() {
         <div className="am-container">
           <header className="am-heading">
             <div>
-              <p className="am-eyebrow">EMPLOYER WORKSPACE</p>
+              {/* <p className="am-eyebrow">EMPLOYER WORKSPACE</p> */}
               <h1>Applicants</h1>
               <p className="am-subtitle">
                 Event Assistant · Kozhikode · Sat 24 Oct

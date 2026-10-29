@@ -45,7 +45,7 @@ const CSS = `
   max-width: 1160px; margin: 0 auto; padding: 12px 24px;
   display: flex; align-items: center; gap: 8px;
 }
-.nv-logo { font-size: 20px; font-weight: 700; margin-right: 18px; color: var(--brand); }
+.nv-logo { font-size: 20px; font-weight: 700; margin-right: 18px;  }
 .nv-logo-dot {
   display: inline-block; width: 8px; height: 8px; border-radius: 50%;
   background: var(--rose); margin-left: 2px;

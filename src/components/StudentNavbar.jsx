@@ -12,38 +12,39 @@ const NAV = [
 
 const CSS = `
 .nv-header {
+  width: 100%;
   height: 56px;
   position: sticky;
   top: 0;
   z-index: 5;
   background: #fff;
   border-bottom: 1px solid #e6dcd6;
+  font-family: "DM Sans", system-ui, sans-serif;
 }
 .nv-header-inner {
-  height: 55px; max-width: 1160px; margin: 0 auto; padding: 0 24px;
-  display: flex; align-items: center; gap: 8px;
+  height: 56px; max-width: 1080px; margin: 0 auto; padding: 0 20px;
+  display: flex; align-items: center; gap: 20px;
 }
-.nv-logo { font-size: 20px; font-weight: 700; margin-right: 18px; letter-spacing: .2px; }
+.nv-logo { font-size: 1.25rem; font-weight: 700; margin-right: 0; letter-spacing: -.02em; }
 .nv-logo-dot {
   display: inline-block; width: 8px; height: 8px; border-radius: 50%;
   background: #c99a9a; margin-left: 2px;
 }
-.nv-nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.nv-nav { display: flex; gap: 2px; flex: 1; overflow-x: auto; flex-wrap: nowrap; }
 .nv-nav a {
-  padding: 8px 10px; border-radius: 6px; color: #7a6b6b;
-  text-decoration: none; font-size: 16px;
+  padding: 6px 10px; border-radius: 6px; color: #7b6b6e;
+  text-decoration: none; font-size: 15px; font-weight: 500; white-space: nowrap;
 }
-.nv-nav a:hover { color: #231a1a; }
-.nv-nav a.active { background: #f6e1de; color: #231a1a; }
-.nv-right { display: flex; align-items: center; gap: 30px; }
+.nv-nav a.active { background: #f4e3e1; color: #2d2124; }
+.nv-right { display: flex; align-items: center; gap: 8px; }
 .nv-role {
-  background: #e7efe0; color: #3f5a35; font-weight: 700; font-size: 12.5px;
-  padding: 5px 11px; border-radius: 6px;
+  background: #e9efe3; color: #56694b; font-weight: 700; font-size: .72rem;
+  padding: 2px 8px; border-radius: 4px; white-space: nowrap;
 }
-.nv-logout { color: #7a6b6b; text-decoration: none; font-size: 15px; }
+.nv-logout { padding: 5px 10px; border-radius: 6px; color: #2d2124; text-decoration: none; font-size: .85rem; }
 @media (max-width: 760px) {
   .nv-header { height: auto; }
-  .nv-header-inner { height: auto; min-height: 55px; }
+  .nv-header-inner { height: auto; min-height: 56px; gap: 10px; }
   .nv-header-inner { flex-wrap: wrap; }
   .nv-nav { order: 3; width: 100%; flex-basis: 100%; }
 }

@@ -60,8 +60,7 @@ const CSS = `
   white-space: nowrap;
   text-decoration: none;
 }
-.employer-nav-links a.on,
-.employer-nav-links a:hover {
+.employer-nav-links a.on {
   background: #f4e3e1;
   color: #2d2124;
 }
