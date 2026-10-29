@@ -1,7 +1,7 @@
 
 "use client";
 
-import Navbar from "../components/Navbar";
+import EmployerNavbar from "../components/EmployerNavbar";
 import Footer from "../components/Footer";
 import { Building2, Mail, Phone, MapPin, Globe, Pencil, ShieldCheck } from "lucide-react";
 import "../styles/global.css";
@@ -41,10 +41,8 @@ const saveChanges = (event) => {
 
   return (
     <div className="nv employer-profile">
-      <Navbar
-        role="employer"
+      <EmployerNavbar
         active="/employer/profile"
-        onNavigate={onNavigate}
       />
 
       <main className="w" style={{ paddingTop: 36 }}>

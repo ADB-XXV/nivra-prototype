@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import Navbar from "../components/Navbar";
+import EmployerNavbar from "../components/EmployerNavbar";
 import { INITIAL_APPLICANTS } from "../data/applicants";
 
 export default function ApplicationsManagement() {
@@ -73,7 +73,7 @@ export default function ApplicationsManagement() {
 
   return (
     <div className="nv">
-      <Navbar role="employer" active="/employer/applicants" />
+      <EmployerNavbar active="/employer/applicants" />
       <style>{`
         .am-page {
           --am-ink: #302626;
@@ -570,7 +570,7 @@ export default function ApplicationsManagement() {
         <div className="am-container">
           <header className="am-heading">
             <div>
-              <p className="am-eyebrow">EMPLOYER WORKSPACE</p>
+              {/* <p className="am-eyebrow">EMPLOYER WORKSPACE</p> */}
               <h1>Applicants</h1>
               <p className="am-subtitle">
                 Event Assistant · Kozhikode · Sat 24 Oct
@@ -727,7 +727,7 @@ export default function ApplicationsManagement() {
               <span>
                 {filteredApplicants.length} of {applicants.length} results
               </span>
-              <span>Prototype · Sample application data</span>
+              <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
             </footer>
           </section>
         </div>

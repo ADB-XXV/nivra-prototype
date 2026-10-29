@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import "./PostJob";
 import PostJob from "./PostJob";
 import "../styles/EmployerDashboard.css";
+import EmployerNavbar from "../components/EmployerNavbar";
 
 const initialJobs = [
   {
@@ -74,6 +75,7 @@ export default function EmployerDashboard() {
 
   return (
     <div className="employer-page">
+      <EmployerNavbar active="/employer/dashboard" />
       <main className="employer-main">
         {notice && (
           <div className="notice" role="status">
@@ -197,7 +199,7 @@ export default function EmployerDashboard() {
       </main>
 
       <footer className="employer-footer">
-        <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow. Prototype with sample data; employers, jobs and students are fictional.
+        <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
       </footer>
     </div>
   );

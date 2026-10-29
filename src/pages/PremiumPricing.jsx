@@ -1,9 +1,11 @@
 import React from "react";
+import EmployerNavbar from "../components/EmployerNavbar";
 
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-* { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
+
 .nivra-plans {
   --ink: #33292b;
   --muted: #827779;
@@ -11,6 +13,8 @@ const styles = `
   --maroon: #593b40;
   --cream: #faf6f2;
   min-height: 100vh;
+  /* Forces the vertical scrollbar to always remain visible, preventing layout shifts */
+  overflow-y: scroll; 
   background: var(--cream);
   color: var(--ink);
   font-family: Inter, Arial, sans-serif;
@@ -88,6 +92,7 @@ const styles = `
   color: white;
   padding: 9px 16px;
   border-radius: 6px;
+  text-decoration: none;
 }
 .nivra-plans .upgrade:hover { background: #40292e; }
 .nivra-plans .features {
@@ -104,6 +109,7 @@ export default function PremiumPricing() {
   return (
     <div className="nivra-plans">
       <style>{styles}</style>
+      <EmployerNavbar active="/pricing" />
       <main className="content">
         <h1>Simple plans for better hiring</h1>
         <p className="subtitle">Choose the tools that fit your hiring needs. You can change plans at any time.</p>

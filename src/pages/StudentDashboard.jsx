@@ -1,144 +1,106 @@
 "use client";
 
 import React from "react";
-import "../styles/StudentDashboard.css";
+import StudentNavbar from "../components/StudentNavbar";
+import Footer from "../components/Footer";
+
+// Sample data only. Same applications as the My Applications page.
+const RECENT = [
+  { id: 1, title: "Event Assistant", employer: "Malabar Events", city: "Kozhikode", applied: "16 Oct", status: "Under Review" },
+  { id: 2, title: "Catering Helper", employer: "Spice Route Caterers", city: "Kochi", applied: "12 Oct", status: "Accepted" },
+  { id: 4, title: "Campus Event Crew", employer: "Aarambh Fest Team", city: "Kozhikode", applied: "14 Oct", status: "Shortlisted" },
+];
+
+const UPCOMING = { title: "Catering Helper", employer: "Spice Route Caterers", city: "Kochi", date: "Sun, 25 Oct", hours: "11:00 am – 4:00 pm", pay: 700 };
+
+// Status badge colours live here so this page works with only globals.css.
+// Move into globals.css when other pages need them.
+const css = `
+.nv .sd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.nv .sd-head h1{font-size:1.8rem;margin:0 0 4px}
+.nv .sd-stats{display:flex;gap:40px;flex-wrap:wrap;margin:20px 0 24px}
+.nv .sd-stats b{display:block;font-size:1.8rem;line-height:1.2}
+.nv .sd-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:24px;align-items:start}
+.nv .sd-link{color:var(--sd);font-weight:500;text-decoration:none}
+.nv .sd-link:hover{text-decoration:underline}
+.nv .bd{font-size:.76rem;font-weight:700;padding:2px 9px;border-radius:4px;white-space:nowrap;background:var(--ln)}
+.nv .bd.under-review{background:var(--tl)}
+.nv .bd.shortlisted{background:var(--sl);color:var(--sd)}
+.nv .bd.accepted{background:var(--sd);color:var(--bg)}
+@media(max-width:760px){.nv .sd-grid{grid-template-columns:1fr}.nv .sd-stats{gap:24px}}
+`;
+
+const statusClass = (s) => s.toLowerCase().replace(" ", "-");
 
 export default function StudentDashboard() {
   return (
-    <div className="student-dashboard">
+    <div className="nv">
+      <style>{css}</style>
+      <StudentNavbar active="/student/dashboard" />
 
-      {/* Welcome section */}
-      <section className="dashboard-welcome">
-        <div>
-          <p className="welcome-label">STUDENT DASHBOARD</p>
-          <h1>Welcome back, Anjali!</h1>
-          <p>Here's what's happening with your job search.</p>
-        </div>
-
-        <div className="student-avatar">AN</div>
-      </section>
-
-      {/* Summary cards */}
-      <section className="dashboard-stats">
-
-        <div className="stat-card">
-          <p>Active applications</p>
-          <h2>3</h2>
-          <span>Jobs you've applied for</span>
-        </div>
-
-        <div className="stat-card">
-          <p>Upcoming jobs</p>
-          <h2>1</h2>
-          <span>Your next scheduled work</span>
-        </div>
-
-        <div className="stat-card">
-          <p>Saved jobs</p>
-          <h2>3</h2>
-          <span>Jobs saved for later</span>
-        </div>
-
-      </section>
-
-      {/* Main dashboard content */}
-      <div className="dashboard-content">
-
-        {/* Recent applications */}
-        <section className="dashboard-card applications-card">
-          <div className="section-heading">
-            <div>
-              <h2>Recent applications</h2>
-              <p>Track the progress of your applications.</p>
-            </div>
-
-            <a href="/myapplications">View all</a>
+      <main className="w" style={{ padding: "28px 20px 8px" }}>
+        {/* Welcome */}
+        <section className="sd-head">
+          <div>
+            <h1>Welcome back, Anjali</h1>
+            <p className="mu" style={{ margin: 0 }}>Here’s what’s happening with your job search.</p>
           </div>
-
-          <div className="application-item">
-            <div className="job-icon">EA</div>
-
-            <div className="job-details">
-              <h3>Event Assistant</h3>
-              <p>Campus Events · Kozhikode</p>
-              <span>Applied recently</span>
-            </div>
-
-            <span className="status under-review">Under Review</span>
-          </div>
-
-          <div className="application-item">
-            <div className="job-icon">CH</div>
-
-            <div className="job-details">
-              <h3>Catering Helper</h3>
-              <p>Spice Route Caterers</p>
-              <span>Applied recently</span>
-            </div>
-
-            <span className="status accepted">Accepted</span>
-          </div>
-
-          <div className="application-item">
-            <div className="job-icon">EC</div>
-
-            <div className="job-details">
-              <h3>Campus Event Crew</h3>
-              <p>College Events · Kozhikode</p>
-              <span>Applied recently</span>
-            </div>
-
-            <span className="status shortlisted">Shortlisted</span>
+          <div className="row">
+            <a className="btn" href="/browsejobs">Browse jobs</a>
+            <a className="btn s" href="/studentprofile">Edit profile</a>
           </div>
         </section>
 
-        {/* Right side */}
-        <div className="dashboard-sidebar">
+        {/* Summary */}
+        <section className="sd-stats" aria-label="Summary">
+          <div><b>3</b><span className="mu">active applications</span></div>
+          <div><b>1</b><span className="mu">upcoming job</span></div>
+          <div><b>3</b><span className="mu">saved jobs</span></div>
+        </section>
 
-          {/* Upcoming work */}
-          <section className="dashboard-card upcoming-card">
-            <h2>Upcoming work</h2>
-            <p className="card-subtitle">Your next scheduled job.</p>
-
-            <div className="upcoming-job">
-              <span className="upcoming-label">UPCOMING SHIFT</span>
-
-              <h3>Catering Helper</h3>
-              <p>Spice Route Caterers</p>
-
-              <div className="job-info">
-                <span>📍 Kochi</span>
-                <span>📅 Sun, 25 Oct</span>
-                <span>🕒 11 AM – 4 PM</span>
+        <div className="sd-grid">
+          {/* Recent applications */}
+          <section className="box">
+            <div className="row sp">
+              <h3 style={{ margin: 0 }}>Recently applied</h3>
+              <a className="sd-link" href="/applications">Application history →</a>
+            </div>
+            {RECENT.map((a) => (
+              <div className="jr" key={a.id}>
+                <div className="m">
+                  <b>{a.title}</b>
+                  <div className="mu">{a.employer} · {a.city}</div>
+                  <div className="mu" style={{ fontSize: ".85rem" }}>Applied {a.applied}</div>
+                </div>
+                <span className={`bd ${statusClass(a.status)}`}>{a.status}</span>
               </div>
-
-              <button className="view-job-button">
-                View job details
-              </button>
-            </div>
+            ))}
           </section>
 
-          {/* Saved jobs */}
-          <section className="dashboard-card saved-jobs-card">
-            <div className="section-heading">
-              <h2>Saved jobs</h2>
-              <a href="/savedjobs">View all</a>
-            </div>
+          {/* Right column */}
+          <aside>
+            <section className="box">
+              <h3>Upcoming work</h3>
+              <b>{UPCOMING.title}</b>
+              <div className="mu">{UPCOMING.employer} · {UPCOMING.city}</div>
+              <div className="mu" style={{ margin: "4px 0 14px" }}>
+                {UPCOMING.date} · {UPCOMING.hours} · ₹{UPCOMING.pay}/day
+              </div>
+              <a className="btn s sm" href="/browsejobs">View job details</a>
+            </section>
 
-            <p>You have 3 jobs saved for later.</p>
-
-            <a className="browse-jobs-link" href="/browsejobs">
-              Browse more jobs →
-            </a>
-          </section>
-
+            <section className="box" style={{ marginTop: 14 }}>
+              <div className="row sp">
+                <h3 style={{ margin: 0 }}>Saved jobs</h3>
+                <a className="sd-link" href="/savedjobs">View all →</a>
+              </div>
+              <p className="mu" style={{ margin: "6px 0 0" }}>3 jobs saved for later.</p>
+            </section>
+          </aside>
         </div>
-      </div>
+      </main>
 
-      <footer className="dashboard-footer">
-        Nivra · Find work for a day. Build experience for tomorrow.
-      </footer>
-
+      <Footer />
     </div>
   );
 }
