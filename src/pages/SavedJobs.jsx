@@ -234,7 +234,7 @@ export default function SavedJobs({
       .insert({
         job_id: jobId,
         student_id: studentId,
-        status: "Pending",
+        status: "Applied",
       });
 
     if (error) {

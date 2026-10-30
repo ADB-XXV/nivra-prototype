@@ -1,17 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import EmployerNavbar from "../components/EmployerNavbar";
-import { INITIAL_APPLICANTS } from "../data/applicants";
+import { supabase } from "../lib/supabase";
 
 export default function ApplicationsManagement() {
-  const terminalStatuses = ["Accepted", "Rejected"];
+  const terminalStatuses = ["Accepted", "Rejected", "Completed"];
 
-  const [applicants, setApplicants] = useState(() => [...INITIAL_APPLICANTS]);
-
+  const [applicants, setApplicants] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [notice, setNotice] = useState("");
+  const [updating, setUpdating] = useState(null);
 
   const statuses = [
     "Applied",
@@ -20,6 +22,150 @@ export default function ApplicationsManagement() {
     "Accepted",
     "Rejected",
   ];
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadApplicants() {
+      setLoading(true);
+      setNotice("");
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        if (active) {
+          setNotice("Please log in to view applicants.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: jobData, error: jobError } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("employer_id", user.id);
+
+      if (!active) return;
+
+      if (jobError) {
+        console.error("Could not load employer jobs:", jobError);
+        setNotice(`Could not load jobs: ${jobError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      const jobs = jobData || [];
+      const jobIds = jobs.map((job) => job.id);
+
+      if (jobIds.length === 0) {
+        setApplicants([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: applicationData, error: applicationError } =
+        await supabase
+          .from("applications")
+          .select("id, job_id, student_id, status, applied_at")
+          .in("job_id", jobIds)
+          .order("applied_at", { ascending: false });
+
+      if (!active) return;
+
+      if (applicationError) {
+        console.error("Could not load applications:", applicationError);
+        setNotice(`Could not load applications: ${applicationError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      const applications = applicationData || [];
+      const studentIds = [
+        ...new Set(applications.map((app) => app.student_id)),
+      ];
+
+      let profiles = [];
+
+      if (studentIds.length > 0) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .in("id", studentIds);
+
+        if (!active) return;
+
+        if (profileError) {
+          console.error("Could not load student profiles:", profileError);
+          setNotice(
+            `Applications loaded, but some profiles could not be loaded: ${profileError.message}`
+          );
+        } else {
+          profiles = profileData || [];
+        }
+      }
+
+      const jobById = Object.fromEntries(
+        jobs.map((job) => [job.id, job])
+      );
+
+      const profileById = Object.fromEntries(
+        profiles.map((profile) => [profile.id, profile])
+      );
+
+      const formattedApplicants = applications.map((app) => {
+        const profile = profileById[app.student_id] || {};
+        const job = jobById[app.job_id] || {};
+
+        const skills = Array.isArray(profile.skills)
+          ? profile.skills.join(", ")
+          : profile.skills || "Not provided";
+
+        const appliedDate = app.applied_at
+          ? new Date(app.applied_at).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+            })
+          : "Unknown";
+
+        const jobDate = job.date
+          ? new Date(`${job.date}T12:00:00`).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+            })
+          : "Date not set";
+
+        return {
+          id: app.id,
+          student_id: app.student_id,
+          job_id: app.job_id,
+          name: profile.full_name || "Student",
+          skills,
+          availability: `${jobDate} · ${job.hours || "Timing not specified"}`,
+          experience:
+            profile.experience ||
+            profile.work_experience ||
+            "Not provided",
+          applied: appliedDate,
+          status: app.status || "Applied",
+          jobTitle: job.title || "Job",
+        };
+      });
+
+      if (active) {
+        setApplicants(formattedApplicants);
+        setLoading(false);
+      }
+    }
+
+    loadApplicants();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function canUpdateStatus(currentStatus, nextStatus) {
     if (terminalStatuses.includes(currentStatus)) {
@@ -34,23 +180,46 @@ export default function ApplicationsManagement() {
       return currentStatus === "Shortlisted";
     }
 
-    return nextStatus === "Rejected" &&
-      ["Applied", "Under Review", "Shortlisted"].includes(currentStatus);
+    return (
+      nextStatus === "Rejected" &&
+      ["Applied", "Under Review", "Shortlisted"].includes(currentStatus)
+    );
   }
 
-  function updateStatus(id, status) {
-    setApplicants((current) =>
-      current.map((applicant) => {
-        if (
-          applicant.id !== id ||
-          !canUpdateStatus(applicant.status, status)
-        ) {
-          return applicant;
-        }
+  async function updateStatus(id, status) {
+    if (updating || !canUpdateStatus(
+      applicants.find((applicant) => applicant.id === id)?.status,
+      status
+    )) {
+      return;
+    }
 
-        return { ...applicant, status };
-      })
-    );
+    setUpdating(id);
+    setNotice("");
+
+    const { data, error } = await supabase
+      .from("applications")
+      .update({ status })
+      .eq("id", id)
+      .select("id, status")
+      .single();
+
+    if (error) {
+      console.error("Could not update application:", error);
+      setNotice(`Could not update application: ${error.message}`);
+    } else {
+      setApplicants((current) =>
+        current.map((applicant) =>
+          applicant.id === data.id
+            ? { ...applicant, status: data.status }
+            : applicant
+        )
+      );
+
+      setNotice(`Application ${status.toLowerCase()} successfully.`);
+    }
+
+    setUpdating(null);
   }
 
   const filteredApplicants = useMemo(() => {
@@ -69,7 +238,6 @@ export default function ApplicationsManagement() {
   function statusClass(status) {
     return status.toLowerCase().replace(/\s+/g, "-");
   }
-
   return (
     <div className="nv">
       <EmployerNavbar active="/employer/applicants" />
@@ -577,7 +745,7 @@ export default function ApplicationsManagement() {
               {/* <p className="am-eyebrow">EMPLOYER WORKSPACE</p> */}
               <h1>Applicants</h1>
               <p className="am-subtitle">
-                Event Assistant · Kozhikode · Sat 24 Oct
+                Review applications from students who applied to your jobs.
               </p>
             </div>
 
@@ -586,7 +754,11 @@ export default function ApplicationsManagement() {
               <span>of {applicants.length} applicants</span>
             </div>
           </header>
-
+{(loading || notice) && (
+  <p role="status" style={{ color: "#67464a", marginBottom: "16px" }}>
+    {loading ? "Loading applicants..." : notice}
+  </p>
+)}
           <section className="am-toolbar">
             <label className="am-search">
               <span className="am-search-icon" aria-hidden="true">
@@ -654,7 +826,7 @@ export default function ApplicationsManagement() {
                           <strong>
                             <Link
                               className="am-candidate-name"
-                              href={`/candidate-profile?id=${applicant.id}`}
+                              href={`/candidate-profile?id=${applicant.student_id}`}
                             >
                               {applicant.name}
                             </Link>
@@ -680,34 +852,37 @@ export default function ApplicationsManagement() {
                       <td data-label="Actions">
                         <div className="am-actions">
                           <button
-                            className="am-button"
-                            disabled={!canUpdateStatus(applicant.status, "Shortlisted")}
-                            onClick={() =>
-                              updateStatus(applicant.id, "Shortlisted")
-                            }
-                          >
-                            Shortlist
-                          </button>
+  className="am-button"
+  disabled={
+    updating !== null ||
+    !canUpdateStatus(applicant.status, "Shortlisted")
+  }
+  onClick={() => updateStatus(applicant.id, "Shortlisted")}
+>
+  {updating === applicant.id ? "Updating..." : "Shortlist"}
+</button>
+
+                         <button
+  className="am-button accept"
+  disabled={
+    updating !== null ||
+    !canUpdateStatus(applicant.status, "Accepted")
+  }
+  onClick={() => updateStatus(applicant.id, "Accepted")}
+>
+  {updating === applicant.id ? "Updating..." : "Accept"}
+</button>
 
                           <button
-                            className="am-button accept"
-                            disabled={!canUpdateStatus(applicant.status, "Accepted")}
-                            onClick={() =>
-                              updateStatus(applicant.id, "Accepted")
-                            }
-                          >
-                            Accept
-                          </button>
-
-                          <button
-                            className="am-button reject"
-                            disabled={!canUpdateStatus(applicant.status, "Rejected")}
-                            onClick={() =>
-                              updateStatus(applicant.id, "Rejected")
-                            }
-                          >
-                            Reject
-                          </button>
+  className="am-button reject"
+  disabled={
+    updating !== null ||
+    !canUpdateStatus(applicant.status, "Rejected")
+  }
+  onClick={() => updateStatus(applicant.id, "Rejected")}
+>
+  {updating === applicant.id ? "Updating..." : "Reject"}
+</button>
                         </div>
                       </td>
                     </tr>

@@ -15,8 +15,8 @@ function formatDate(date) {
   });
 }
 
-export default function EmployerDashboard() {
-  const [activeTab, setActiveTab] = useState("Dashboard");
+export default function EmployerDashboard({ initialTab = "Dashboard" }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
  const [jobs, setJobs] = useState([]);
 const [jobsLoading, setJobsLoading] = useState(true);
   const [notice, setNotice] = useState("");
@@ -34,9 +34,9 @@ useEffect(() => {
       await supabase.auth.getUser();
 
     if (authError || !user) {
-      window.location.replace("/login?mode=login");
-      return;
-    }
+  setNotice("Your session has expired. Please log in again.");
+  throw new Error("Your session has expired. Please log in again.");
+}
 
     const { data, error } = await supabase
       .from("profiles")
@@ -46,7 +46,7 @@ useEffect(() => {
 
     if (!active) return;
 
-   if (error) {
+ if (error) {
   console.error("Error publishing job:", error);
   setNotice(`Could not publish job: ${error.message}`);
   throw error;

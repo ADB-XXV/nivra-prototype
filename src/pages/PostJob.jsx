@@ -165,8 +165,21 @@ async function publish() {
               {" · "}{form.workers} workers
             </p>
             <div className="reference-preview-actions">
-              <button type="button" className="button button-primary" onClick={publish}>Publish</button>
-              <button type="button" className="button button-secondary" onClick={() => setPreview(false)}>Edit</button>
+             <button
+  type="button"
+  className="button button-secondary"
+  onClick={() => setPreview(false)}
+>
+  Edit job
+</button>
+
+<button
+  type="button"
+  className="button button-primary"
+  onClick={publish}
+>
+  Publish job
+</button>
             </div>
           </section>
         </div>
