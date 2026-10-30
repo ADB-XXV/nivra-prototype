@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import JOBS from "../data/jobs";
 import StudentNavbar from "../components/StudentNavbar";
+import Navbar from "../components/Navbar";
 
 /* =====================================================================
    Nivra · Page 3 of 16 · Browse jobs
@@ -17,9 +18,12 @@ export default function BrowseJobs({
   savedJobs = [],
   toggleSaved = () => {},
   activeTab = "Browse jobs",
+  publicView = false,
+  initialSearch = "",
+  initialLocation = "",
 }) {
-  const [q, setQ] = useState("");
-  const [loc, setLoc] = useState("");
+  const [q, setQ] = useState(initialSearch);
+  const [loc, setLoc] = useState(initialLocation);
   const [sort, setSort] = useState("soonest");
   const [category, setCategory] = useState("All");
   const [date, setDate] = useState("any");
@@ -55,7 +59,11 @@ export default function BrowseJobs({
     <div className="nivra">
       <style>{css}</style>
 
-      <StudentNavbar active="/browsejobs" />
+      {publicView ? (
+        <Navbar role="public" />
+      ) : (
+        <StudentNavbar active="/browsejobs" />
+      )}
 
       {/* Content */}
       <main>
@@ -125,10 +133,6 @@ export default function BrowseJobs({
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="footer">
-        <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
-      </footer>
     </div>
   );
 }

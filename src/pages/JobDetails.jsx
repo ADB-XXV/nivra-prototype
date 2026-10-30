@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import StudentNavbar from "../components/StudentNavbar";
+import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabase";
 
 const rupee = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
@@ -34,6 +35,7 @@ export default function JobDetail({
   toggleSaved,
   appliedJobs,
   setAppliedJobs,
+  publicView = false,
 }) {
   const [saved, setSaved] = useState(() => loadSaved());
   const [isApplied, setIsApplied] = useState(false);
@@ -107,6 +109,11 @@ export default function JobDetail({
   function toggleSave() {
     if (!job) return;
 
+    if (publicView) {
+      window.location.assign("/login?mode=login");
+      return;
+    }
+
     if (toggleSaved) {
       toggleSaved(job.id);
       return;
@@ -127,6 +134,11 @@ export default function JobDetail({
 
   async function apply() {
     if (!job?.id || applying || isApplied) return;
+
+    if (publicView) {
+      window.location.assign("/login?mode=login");
+      return;
+    }
 
     setApplying(true);
     setApplyMessage("");
@@ -186,7 +198,11 @@ export default function JobDetail({
     <div className="nivra">
       <style>{css}</style>
 
-      <StudentNavbar active="/browsejobs" />
+      {publicView ? (
+        <Navbar role="public" />
+      ) : (
+        <StudentNavbar active="/browsejobs" />
+      )}
 
       <main>
         <a
@@ -300,12 +316,6 @@ export default function JobDetail({
           </>
         )}
       </main>
-
-      <footer className="footer">
-        <p>
-          <b>Nivra</b> · Find work for a day. Build experience for tomorrow.
-        </p>
-      </footer>
     </div>
   );
 }

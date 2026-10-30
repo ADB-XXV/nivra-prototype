@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState } from "react";
@@ -167,7 +166,7 @@ export default function ApplicationsManagement() {
           gap: 12px;
           flex: 1;
           max-width: 620px;
-          min-height: 52px;
+          min-height: 44px;
           padding: 0 16px;
           border: 1px solid var(--am-border);
           border-radius: 10px;
@@ -184,12 +183,17 @@ export default function ApplicationsManagement() {
           font-size: 25px;
         }
 
-        .am-search input {
+        /* Higher specificity so the global ".nv input:focus-visible" green outline can't apply */
+        .am-page .am-search input,
+        .am-page .am-search input:focus,
+        .am-page .am-search input:focus-visible {
           width: 100%;
           min-width: 0;
-          padding: 13px 0;
+          padding: 9px 0;
           border: 0;
+          border-radius: 0;
           outline: none;
+          box-shadow: none;
           background: transparent;
           color: var(--am-ink);
           font: inherit;
@@ -727,7 +731,7 @@ export default function ApplicationsManagement() {
               <span>
                 {filteredApplicants.length} of {applicants.length} results
               </span>
-              <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
+              
             </footer>
           </section>
         </div>

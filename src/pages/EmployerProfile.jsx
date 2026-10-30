@@ -2,7 +2,6 @@
 "use client";
 
 import EmployerNavbar from "../components/EmployerNavbar";
-import Footer from "../components/Footer";
 import { Building2, Mail, Phone, MapPin, Globe, Pencil, ShieldCheck } from "lucide-react";
 import "../styles/global.css";
 import { useState } from "react";
@@ -261,7 +260,6 @@ const saveChanges = (event) => {
     </section>
   </div>
 )}
-      <Footer/>
     </div>
   );
 }

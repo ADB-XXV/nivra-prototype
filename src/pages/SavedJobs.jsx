@@ -172,12 +172,6 @@ export default function SavedJobs({ onNavigate = (path) => window.location.assig
           ))}
         </section>
       </main>
-
-      <footer className="nv-footer">
-        <p>
-          <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow. 
-        </p>
-      </footer>
     </div>
   );
 }
