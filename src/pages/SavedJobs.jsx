@@ -354,6 +354,7 @@ export default function SavedJobs({
         </section>
       </main>
 
+
       <footer className="nv-footer">
         <p>
           <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow.

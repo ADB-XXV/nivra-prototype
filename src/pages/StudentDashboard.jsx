@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import StudentNavbar from "../components/StudentNavbar";
-import Footer from "../components/Footer";
 
 // Sample data only. Same applications as the My Applications page.
 const RECENT = [
@@ -154,7 +153,6 @@ export default function StudentDashboard() {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }

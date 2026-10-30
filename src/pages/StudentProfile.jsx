@@ -278,11 +278,6 @@ export default function StudentProfile() {
           </aside>
         </div>
       </main>
-
-      <footer className="nivra-footer">
-        <strong>Nivra</strong> · Find work for a day. Build experience for
-        tomorrow.
-      </footer>
     </div>
   );
 }

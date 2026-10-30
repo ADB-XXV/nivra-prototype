@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import PostJob from "./PostJob";
 import "../styles/EmployerDashboard.css";
@@ -22,7 +22,7 @@ const [jobsLoading, setJobsLoading] = useState(true);
   const [notice, setNotice] = useState("");
 const [profile, setProfile] = useState(null);
 const [profileLoading, setProfileLoading] = useState(true);
-const [profileError, setProfileError] = useState(""); 
+const [profileError] = useState("");
 const [applications, setApplications] = useState([]);
 const [applicationsLoading, setApplicationsLoading] = useState(true);
 const [updatingApplication, setUpdatingApplication] = useState(null);
@@ -285,10 +285,10 @@ async function updateApplicationStatus(applicationId, status) {
 </p>
               </div>
               <div className="heading-actions">
-                <button className="button button-primary" onClick={() => navigate("Post a job")}>
+                <button className="button button-primary" onClick={() => window.location.assign("/employer/post-job")}>
                   Post a job
                 </button>
-                <button className="button button-secondary" onClick={() => navigate("Applicants")}>
+                <button className="button button-secondary" onClick={() => window.location.assign("/employer/applicants")}>
                   Manage applicants
                 </button>
               </div>
@@ -352,7 +352,7 @@ async function updateApplicationStatus(applicationId, status) {
 
         <button
           className="button button-small"
-          onClick={() => navigate("Applicants")}
+          onClick={() => window.location.assign(`/candidate-profile?id=${applicant.student_id || applicant.id}`)}
         >
           View
         </button>
@@ -463,10 +463,6 @@ async function updateApplicationStatus(applicationId, status) {
           </section>
         )}
       </main>
-
-      <footer className="employer-footer">
-        <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
-      </footer>
     </div>
   );
 }

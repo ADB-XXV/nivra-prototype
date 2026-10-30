@@ -1,3 +1,5 @@
+"use client";
+
 // src/app/components/Navbar.jsx
 // One navbar for every page. `role` picks which links to show, so students
 // never see employer links and the other way round.
@@ -11,10 +13,7 @@
 import Link from "next/link";
 
 const LINKS = {
-  public: [
-    { label: "Find jobs", path: "/browsejobs" },
-    { label: "For employers", path: "/login?role=employer&mode=signup" },
-  ],
+  public: [],
   student: [
     { label: "Browse jobs", path: "/browsejobs" },
     { label: "Saved", path: "/saved" },

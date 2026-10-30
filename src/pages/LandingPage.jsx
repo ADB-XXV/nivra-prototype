@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
 import JOBS from "../data/jobs";
 
 const CATEGORIES = ["Event assistance", "Catering", "Retail", "Tutoring", "Delivery", "Campus events", "Hospitality"];
@@ -33,13 +32,12 @@ function JobRow({ job, onView, saved, onToggleSave }) {
 export default function LandingPage({ onNavigate = (p) => window.location.assign(p) }) {
   const [title, setTitle] = useState("");
   const [city, setCity] = useState("");
-  const [saved, setSaved] = useState([6]);
 
-  const viewJob = (id) => onNavigate(`/jobdetails/${id}`);
-  const toggleSave = (id) => setSaved((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const viewJob = (id) => onNavigate(`/jobdetails/${id}?from=landing`);
+  const toggleSave = () => onNavigate("/login?mode=login");
   const search = (e) => {
     e.preventDefault();
-    onNavigate(`/browsejobs?q=${encodeURIComponent(title)}&loc=${encodeURIComponent(city)}`);
+    onNavigate(`/browsejobs?q=${encodeURIComponent(title)}&loc=${encodeURIComponent(city)}&from=landing`);
   };
 
   return (
@@ -68,7 +66,7 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
               <div className="row" style={{ marginTop: 12 }}>
                 <button type="submit" className="btn">Search jobs</button>
                 <button type="button" className="btn s" onClick={() => onNavigate("/login?role=employer&mode=signup")}>Hire workers</button>
-                <button type="button" className="btn g" onClick={() => onNavigate("/browsejobs")}>Find jobs →</button>
+                <button type="button" className="btn g" onClick={() => onNavigate("/browsejobs?from=landing")}>Find jobs →</button>
               </div>
             </form>
           </div>
@@ -81,7 +79,7 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
         <section className="w">
           <h2>Browse by category</h2>
           {CATEGORIES.map((c) => (
-            <button key={c} className="ch" onClick={() => onNavigate(`/browsejobs?category=${encodeURIComponent(c)}`)}>{c}</button>
+            <button key={c} className="ch" onClick={() => onNavigate(`/browsejobs?category=${encodeURIComponent(c)}&from=landing`)}>{c}</button>
           ))}
         </section>
 
@@ -89,7 +87,7 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
           <h2>Featured jobs</h2>
           <div className="box" style={{ padding: "4px 20px" }}>
             {JOBS.slice(3).map((j) => (
-              <JobRow key={j.id} job={j} onView={viewJob} saved={saved.includes(j.id)} onToggleSave={toggleSave} />
+              <JobRow key={j.id} job={j} onView={viewJob} saved={false} onToggleSave={toggleSave} />
             ))}
           </div>
         </section>
@@ -110,14 +108,13 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
           <div className="w row sp">
             <div style={{ maxWidth: 620 }}>
               <h2>Premium for employers</h2>
-              <p>Advanced candidate filters, side-by-side comparison, matching insights and help with bulk hiring. Illustrative prototype price: ₹699/month.</p>
+              <p>Advanced candidate filters, side-by-side comparison, matching insights and help with bulk hiring. </p>
             </div>
             <button className="btn" onClick={() => onNavigate("/pricing")}>See plans</button>
           </div>
         </section>
       </main>
 
-      <Footer />
     </div>
   );
 }

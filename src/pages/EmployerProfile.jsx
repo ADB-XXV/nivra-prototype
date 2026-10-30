@@ -8,9 +8,7 @@ import "../styles/global.css";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-export default function EmployerProfile({
-  onNavigate = (path) => window.location.assign(path),
-}) {
+export default function EmployerProfile() {
   const [company, setCompany] = useState({
     name: "",
     industry: "",

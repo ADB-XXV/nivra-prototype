@@ -14,13 +14,7 @@ const INITIAL_APPLICATIONS = [
 
 const FILTERS = ["All", "Applied", "Under Review", "Shortlisted", "Accepted", "Rejected", "Completed"];
 const WITHDRAWABLE = ["Applied", "Under Review"];
-const NAV = [
-  ["Browse jobs", "/browsejobs"],
-  ["Saved", "/saved"],
-  ["My applications", "/applications"],
-  ["Dashboard", "/student/dashboard"],
-  ["Profile", "/student/profile"],
-];
+
 
 const CSS = `
 .nv-root {
@@ -205,12 +199,6 @@ export default function MyApplications({ onNavigate = (path) => window.location.
           ))}
         </section>
       </main>
-
-      <footer className="nv-footer">
-        <p>
-          <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow. 
-        </p>
-      </footer>
     </div>
   );
 }

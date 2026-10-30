@@ -108,7 +108,7 @@ const styles = `
 export default function PremiumPricing() {
   return (
     <div className="nivra-plans">
-      <style>{styles}</style>
+      <style suppressHydrationWarning>{styles}</style>
       <EmployerNavbar active="/pricing" />
       <main className="content">
         <h1>Simple plans for better hiring</h1>

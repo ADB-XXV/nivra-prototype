@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import BrowseJobs from "./BrowseJobs";
 import JobDetails from "./JobDetails";
+import JOBS from "../data/jobs";
 
 function convertJob(job) {
   return {
@@ -41,6 +42,9 @@ function convertJob(job) {
 export default function JobsExperience({
   initialJobId = null,
   initialBackPath = "/browsejobs",
+  publicView = false,
+  initialSearch = "",
+  initialLocation = "",
 }) {
   const router = useRouter();
 
@@ -56,6 +60,14 @@ export default function JobsExperience({
     let active = true;
 
     async function loadJobs() {
+      if (publicView) {
+        if (active) {
+          setJobs(JOBS);
+          setLoading(false);
+        }
+        return;
+      }
+
       const {
         data: { user },
         error: authError,
@@ -122,7 +134,7 @@ export default function JobsExperience({
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [router, publicView]);
 
   async function toggleSaved(jobId) {
     if (!userId) return;
@@ -201,6 +213,7 @@ export default function JobsExperience({
           toggleSaved={toggleSaved}
           appliedJobs={appliedJobs}
           setAppliedJobs={setAppliedJobs}
+          publicView={publicView}
         />
       ) : (
         <BrowseJobs
@@ -210,6 +223,9 @@ export default function JobsExperience({
           toggleSaved={toggleSaved}
           activeTab="Browse jobs"
           saveError={saveError}
+          publicView={publicView}
+          initialSearch={initialSearch}
+          initialLocation={initialLocation}
         />
       )}
     </div>
