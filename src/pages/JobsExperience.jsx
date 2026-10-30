@@ -7,17 +7,6 @@ import { supabase } from "../lib/supabase";
 import BrowseJobs from "./BrowseJobs";
 import JobDetails from "./JobDetails";
 
-function formatDate(date) {
-  if (!date) return "Date not set";
-
-  return new Date(`${date}T12:00:00`).toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  });
-}
-
-
 function convertJob(job) {
   return {
     ...job,
@@ -49,7 +38,6 @@ function convertJob(job) {
   };
 }
 
-
 export default function JobsExperience({
   initialJobId = null,
   initialBackPath = "/browsejobs",
@@ -59,8 +47,10 @@ export default function JobsExperience({
   const [jobs, setJobs] = useState([]);
   const [savedJobs, setSavedJobs] = useState([]);
   const [appliedJobs, setAppliedJobs] = useState([]);
+  const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -74,6 +64,33 @@ export default function JobsExperience({
       if (authError || !user) {
         router.replace("/login?mode=login");
         return;
+      }
+
+      if (!active) return;
+
+      setUserId(user.id);
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Could not load profile:", profileError);
+      }
+
+      if (profile?.role === "student") {
+        const { data: savedData, error: savedError } = await supabase
+          .from("saved_jobs")
+          .select("job_id")
+          .eq("student_id", user.id);
+
+        if (savedError) {
+          console.error("Could not load saved jobs:", savedError);
+        } else if (active) {
+          setSavedJobs((savedData || []).map((item) => item.job_id));
+        }
       }
 
       const { data, error: jobsError } = await supabase
@@ -107,12 +124,47 @@ export default function JobsExperience({
     };
   }, [router]);
 
-  function toggleSaved(jobId) {
-    setSavedJobs((previous) =>
-      previous.includes(jobId)
-        ? previous.filter((id) => id !== jobId)
-        : [...previous, jobId]
-    );
+  async function toggleSaved(jobId) {
+    if (!userId) return;
+
+    setSaveError("");
+
+    const isSaved = savedJobs.includes(jobId);
+
+    if (isSaved) {
+      const { error: deleteError } = await supabase
+        .from("saved_jobs")
+        .delete()
+        .eq("student_id", userId)
+        .eq("job_id", jobId);
+
+      if (deleteError) {
+        console.error("Could not remove saved job:", deleteError);
+        setSaveError("Could not remove this saved job.");
+        return;
+      }
+
+      setSavedJobs((previous) =>
+        previous.filter((id) => id !== jobId)
+      );
+    } else {
+      const { error: insertError } = await supabase
+        .from("saved_jobs")
+        .insert({
+          student_id: userId,
+          job_id: jobId,
+        });
+
+      if (insertError && insertError.code !== "23505") {
+        console.error("Could not save job:", insertError);
+        setSaveError("Could not save this job. Please try again.");
+        return;
+      }
+
+      setSavedJobs((previous) =>
+        previous.includes(jobId) ? previous : [...previous, jobId]
+      );
+    }
   }
 
   function goBackToJobs() {
@@ -157,6 +209,7 @@ export default function JobsExperience({
           savedJobs={savedJobs}
           toggleSaved={toggleSaved}
           activeTab="Browse jobs"
+          saveError={saveError}
         />
       )}
     </div>

@@ -16,8 +16,9 @@ export default function BrowseJobs({
   onView = (job) => window.location.assign(`/jobdetails/${job.id}`),
   savedJobs = [],
   toggleSaved = () => {},
-  activeTab = "Browse jobs",
-}) {
+    activeTab = "Browse jobs",
+  saveError = "",
+})  {
   const [q, setQ] = useState("");
   const [loc, setLoc] = useState("");
   const [sort, setSort] = useState("soonest");
@@ -101,6 +102,7 @@ export default function BrowseJobs({
 
           <section>
             <div className="count">{jobs.length} {jobs.length === 1 ? "job" : "jobs"}</div>
+            {saveError && <p role="alert">{saveError}</p>}
             <div className="list">
               {jobs.length === 0 && <div className="empty">No jobs match your filters.</div>}
               {jobs.map((j) => {
