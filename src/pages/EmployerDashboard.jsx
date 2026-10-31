@@ -148,14 +148,21 @@ console.log("APPLICATION DATA:", applicationData);
     }))
   );
 
-  setJobs((previous) =>
-    previous.map((job) => ({
+ setJobs((previous) =>
+  previous.map((job) => {
+    const jobApplications = (applicationData || []).filter(
+      (app) => app.job_id === job.id
+    );
+
+    return {
       ...job,
-      applicants: (applicationData || []).filter(
-        (app) => app.job_id === job.id
+      applicants: jobApplications.length,
+      filled: jobApplications.filter(
+        (app) => app.status === "Accepted" || app.status === "Completed"
       ).length,
-    }))
-  );
+    };
+  })
+);
 }
 
 setApplicationsLoading(false);
@@ -418,29 +425,53 @@ async function updateApplicationStatus(applicationId, status) {
             {applicant.status}
           </span>
 
-          {applicant.status === "Pending" && (
-            <>
-              <button
-                className="button button-small"
-                disabled={updatingApplication !== null}
-                onClick={() =>
-                  updateApplicationStatus(applicant.id, "Accepted")
-                }
-              >
-                {updatingApplication === applicant.id ? "Updating..." : "Accept"}
-              </button>
+        {["Applied", "Under Review"].includes(applicant.status) && (
+  <>
+    <button
+      className="button button-small"
+      disabled={updatingApplication !== null}
+      onClick={() =>
+        updateApplicationStatus(applicant.id, "Shortlisted")
+      }
+    >
+      {updatingApplication === applicant.id ? "Updating..." : "Shortlist"}
+    </button>
 
-              <button
-                className="button button-small"
-                disabled={updatingApplication !== null}
-                onClick={() =>
-                  updateApplicationStatus(applicant.id, "Rejected")
-                }
-              >
-                Reject
-              </button>
-            </>
-          )}
+    <button
+      className="button button-small"
+      disabled={updatingApplication !== null}
+      onClick={() =>
+        updateApplicationStatus(applicant.id, "Rejected")
+      }
+    >
+      Reject
+    </button>
+  </>
+)}
+
+{applicant.status === "Shortlisted" && (
+  <>
+    <button
+      className="button button-small"
+      disabled={updatingApplication !== null}
+      onClick={() =>
+        updateApplicationStatus(applicant.id, "Accepted")
+      }
+    >
+      {updatingApplication === applicant.id ? "Updating..." : "Accept"}
+    </button>
+
+    <button
+      className="button button-small"
+      disabled={updatingApplication !== null}
+      onClick={() =>
+        updateApplicationStatus(applicant.id, "Rejected")
+      }
+    >
+      Reject
+    </button>
+  </>
+)}
         </article>
       ))
     )}

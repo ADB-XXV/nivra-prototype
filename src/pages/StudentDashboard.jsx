@@ -364,7 +364,7 @@ export default function StudentDashboard() {
             <section className="box" style={{ marginTop: 14 }}>
               <div className="row sp">
                 <h3 style={{ margin: 0 }}>Saved jobs</h3>
-                <a className="sd-link" href="/savedjobs">View all →</a>
+                <a className="sd-link" href="/saved">View all →</a>
               </div>
 
               <p className="mu" style={{ margin: "6px 0 0" }}>

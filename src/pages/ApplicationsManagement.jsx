@@ -21,6 +21,7 @@ export default function ApplicationsManagement() {
     "Shortlisted",
     "Accepted",
     "Rejected",
+    "Completed",
   ];
 
   useEffect(() => {
