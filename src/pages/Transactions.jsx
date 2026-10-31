@@ -89,7 +89,22 @@ function PaymentSummary({ amount, fee, studentAmount }) {
     </table>
   );
 }
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
 
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+
+    document.body.appendChild(script);
+  });
+}
 export default function Transactions() {
   const [awaiting, setAwaiting] = useState([]);
   const [due, setDue] = useState([]);
@@ -393,36 +408,128 @@ export default function Transactions() {
   }
 
   async function confirmPayDue() {
-    const row = modal.row;
+  const row = modal.row;
 
-    if (!row.paymentId) {
-      setError("Payment record not found. Refresh and try again.");
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-
-    try {
-      const { error: rpcError } = await supabase.rpc("mark_payment_paid", {
-        p_payment_id: row.paymentId,
-        p_payment_reference: null,
-      });
-
-      if (rpcError) throw rpcError;
-
-      setModal(null);
-      setNotice(
-        `Payment for ${row.name} has been marked as Paid in Nivra.`
-      );
-      await loadTransactions();
-    } catch (err) {
-      console.error("Payment update error:", err);
-      setError(err.message || "Could not update payment status.");
-    } finally {
-      setSaving(false);
-    }
+  if (!row.paymentId) {
+    setError("Payment record not found. Refresh and try again.");
+    return;
   }
+
+  setSaving(true);
+  setError("");
+
+  try {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    if (!session?.access_token) {
+      throw new Error("Your session has expired. Please log in again.");
+    }
+
+    const scriptLoaded = await loadRazorpayScript();
+
+    if (!scriptLoaded) {
+      throw new Error("Could not load Razorpay Checkout. Check your internet connection.");
+    }
+
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    };
+
+    const orderResponse = await fetch("/api/payments/create-order", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        paymentId: row.paymentId,
+      }),
+    });
+
+    const orderData = await orderResponse.json();
+
+    if (!orderResponse.ok) {
+      throw new Error(orderData.error || "Could not start payment.");
+    }
+
+    const options = {
+      key: orderData.keyId,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: "Nivra",
+      description: `Payment for ${row.job}`,
+      order_id: orderData.orderId,
+
+      handler: async function (response) {
+        setSaving(true);
+        setError("");
+
+        try {
+          const verifyResponse = await fetch("/api/payments/verify", {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              paymentId: row.paymentId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+
+          const verifyData = await verifyResponse.json();
+
+          if (!verifyResponse.ok) {
+            throw new Error(
+              verifyData.error || "Payment verification failed."
+            );
+          }
+
+          setModal(null);
+          setNotice(
+            `Payment for ${row.name} was successfully verified and recorded.`
+          );
+
+          await loadTransactions();
+        } catch (err) {
+          console.error("Payment verification error:", err);
+          setError(
+            `${err.message} If money was deducted, contact Nivra support before retrying.`
+          );
+        } finally {
+          setSaving(false);
+        }
+      },
+
+      modal: {
+        ondismiss: () => {
+          setSaving(false);
+        },
+      },
+
+      theme: {
+        color: "#67464a",
+      },
+    };
+
+    const checkout = new window.Razorpay(options);
+
+    checkout.on("payment.failed", function (response) {
+      setSaving(false);
+      setError(
+        response.error?.description || "Payment failed. You can try again."
+      );
+    });
+
+    checkout.open();
+  } catch (err) {
+    console.error("Razorpay checkout error:", err);
+    setError(err.message || "Could not start Razorpay checkout.");
+    setSaving(false);
+  }
+}
 
   function submitDispute() {
     if (!reason) {
@@ -766,15 +873,17 @@ export default function Transactions() {
                   fee={row.fee}
                   studentAmount={row.studentAmount}
                 />
-                <p style={{ marginTop: 12 }}>
-                  Transfer the amount using your chosen payment method first. This button only records the payment as Paid in Nivra; it does not transfer money.
-                </p>
+               <p style={{ marginTop: 12 }}>
+  Pay securely through Razorpay. Your Nivra transaction will only be
+  marked as Paid after the payment is verified by our server.
+  This demo uses Razorpay Test Mode.
+</p>
                 {error && <p className="tr-err" role="alert">{error}</p>}
                 <div className="tr-modal-actions">
                   <button className="tr-btn" disabled={saving} onClick={closeModal}>Cancel</button>
-                  <button className="tr-btn pay" disabled={saving} onClick={confirmPayDue}>
-                    {saving ? "Updating..." : "I've transferred the amount — mark as paid"}
-                  </button>
+                 <button className="tr-btn pay" disabled={saving} onClick={confirmPayDue}>
+  {saving ? "Opening checkout..." : `Pay ${rupees(row.amount)} with Razorpay`}
+</button>
                 </div>
               </>
             )}
