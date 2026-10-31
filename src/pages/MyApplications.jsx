@@ -11,7 +11,6 @@ const FILTERS = [
   "Shortlisted",
   "Accepted",
   "Rejected",
-  "Completed",
 ];
 
 const WITHDRAWABLE = ["Applied", "Under Review"];

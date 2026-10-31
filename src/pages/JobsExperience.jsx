@@ -30,6 +30,7 @@ function convertJob(job) {
       : "Date not set",
     time: job.hours || "Hours not specified",
     pay: Number(job.amount),
+    payBasis: job.basis || "Per day",
     about: job.description,
     resp: [job.description],
     skills: job.skills || "Not specified",

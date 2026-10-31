@@ -266,7 +266,13 @@ async function updateApplicationStatus(applicationId, status) {
 
   return (
     <div className="employer-page">
-      <EmployerNavbar active="/employer/dashboard" />
+      <EmployerNavbar
+        active={
+          activeTab === "Post a job"
+            ? "/employer/post-job"
+            : "/employer/dashboard"
+        }
+      />
       <main className="employer-main">
         {notice && (
           <div className="notice" role="status">
@@ -371,14 +377,7 @@ async function updateApplicationStatus(applicationId, status) {
               </section>
 
               <aside className="side-panels">
-                <section className="panel">
-                  <h2>Upcoming staffing needs</h2>
-                  <p><strong>Sat 24 Oct</strong> · 4 more event assistants</p>
-                  <p><strong>Sun 25 Oct</strong> · 3 stage crew</p>
-                  <p className="muted side-description">Need many workers fast?</p>
-                  <button className="button button-small" onClick={() => navigate("Staffing")}>Request staffing help</button>
-                </section>
-                <section className="panel">
+                                <section className="panel">
                   <h2>Premium matching</h2>
                   <p className="muted">Ranked candidates with match reasons.</p>
                   <button className="button button-small" onClick={() => navigate("Plans")}>View plans</button>

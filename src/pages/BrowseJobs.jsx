@@ -9,6 +9,14 @@ import Navbar from "../components/Navbar";
    ===================================================================== */
 
 const rupee = (n) => "₹" + n.toLocaleString("en-IN");
+const payPeriod = (basis) => {
+  if (!basis) return "/day";
+  const normalized = basis.toLowerCase();
+  if (normalized.includes("hour")) return "/hour";
+  if (normalized.includes("month")) return "/month";
+  if (normalized.includes("fixed")) return "";
+  return "/day";
+};
 const jobDays = (job) => (job.dateLabel.match(/\d+/g) || []).map(Number);
 
 /* ---------- Page ---------- */
@@ -122,7 +130,7 @@ export default function BrowseJobs({
                       <div className="row-sub">{j.company} · {j.location}</div>
                       <div className="row-meta">{j.dateLabel} · {j.time} · {j.type}</div>
                     </div>
-                    <div className="price">{rupee(j.pay)}<small>/day</small></div>
+                    <div className="price">{rupee(j.pay)}{payPeriod(j.payBasis) && <small>{payPeriod(j.payBasis)}</small>}</div>
                     <button className={"btn-save" + (isSaved ? " is-saved" : "")} onClick={() => toggleSaved(j.id)}>
                       {isSaved ? "★ Saved" : "☆ Save"}
                     </button>

@@ -11,6 +11,8 @@
 // Must be rendered inside <div className="nv"> (see globals.css).
 
 import Link from "next/link";
+import Image from "next/image";
+import logo from "../images/logo.png";
 
 const LINKS = {
   public: [],
@@ -52,8 +54,10 @@ export default function Navbar({
           className="logo"
           href="/"
           onClick={(event) => handleNavigation(event, "/")}
+          style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
         >
-          Nivra<i />
+          <Image src={logo} alt="Nivra" className="navbar-logo-image" />
+          <span style={{ color: "#593C42", fontWeight: 700,fontSize: "1.4em !important" }}>Nivra</span>
         </Link>
 
         <div className="links">

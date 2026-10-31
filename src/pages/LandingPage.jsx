@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
 import JOBS from "../data/jobs";
+import logo from "../images/logo.png";
 
 const CATEGORIES = ["Event assistance", "Catering", "Retail", "Tutoring", "Delivery", "Campus events", "Hospitality"];
 
@@ -70,9 +71,37 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
               </div>
             </form>
           </div>
-          <div className="box">
-            <h3>Sample openings this week</h3>
-            {JOBS.slice(0, 3).map((j) => <JobRow key={j.id} job={j} onView={viewJob} />)}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              gap: 22,
+              padding: "12px 0",
+            }}
+          >
+            <img
+              src={logo.src}
+              alt="Nivra"
+              style={{ height: 350, width: "auto", maxWidth: "100%" }}
+            />
+            <p
+              style={{
+                transform: "translateY(-55px)",
+                margin: 0,
+                fontSize: "1.4rem !important",
+                fontWeight: 700,
+                lineHeight: 1.35,
+                letterSpacing: "-.01em",
+                color: "#593c42",
+              }}
+            >
+              Work When You Want,
+              <br />
+              <span style={{ color: "#A8B89A" }}>Earn When You Need.</span>
+            </p>
           </div>
         </section>
 
@@ -110,7 +139,7 @@ export default function LandingPage({ onNavigate = (p) => window.location.assign
               <h2>Premium for employers</h2>
               <p>Advanced candidate filters, side-by-side comparison, matching insights and help with bulk hiring. </p>
             </div>
-            <button className="btn" onClick={() => onNavigate("/pricing")}>See plans</button>
+            <button className="btn" onClick={() => onNavigate("/SeePlans")}>See plans</button>
           </div>
         </section>
       </main>

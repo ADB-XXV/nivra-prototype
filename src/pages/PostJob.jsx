@@ -6,15 +6,15 @@ import "../styles/EmployerDashboard.css";
 
 export default function PostJob({ onSubmit, onCancel, employerName }) {
   const [form, setForm] = useState({
-    title: "Event Assistant",
-    category: "Event assistance",
-    workers: "5",
-    description: "Welcome guests, help with setup and pack-down.",
-    skills: "Communication, punctuality",
-    location: "Kozhikode",
-    date: "2026-10-24",
-    hours: "9:00 am – 5:00 pm",
-    amount: "800",
+    title: "",
+    category: "",
+    workers: "",
+    description: "",
+    skills: "",
+    location: "",
+    date: "",
+    hours: "",
+    amount: "",
     basis: "Per day",
   });
   const [preview, setPreview] = useState(false);
@@ -97,6 +97,7 @@ async function publish() {
             <label className="field-label">
               Category
               <select className="form-input" name="category" value={form.category} onChange={change}>
+                <option value="" disabled>Select category</option>
                 <option>Event assistance</option>
                 <option>Hospitality</option>
                 <option>Retail</option>

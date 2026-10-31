@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import StudentNavbar from "../components/StudentNavbar";
 
@@ -19,11 +18,32 @@ const css = `
 .nv .bd.accepted{background:var(--sd);color:var(--bg)}
 .nv .bd.applied{background:var(--ln)}
 .nv .bd.rejected{background:#f5dddd;color:#8b3030}
+.nv .bd.upcoming{background:var(--ln)}
+.nv .bd.in-progress{background:var(--tl)}
+.nv .bd.awaiting-verification{background:var(--tl)}
+.nv .bd.payment-pending{background:var(--tl)}
+.nv .bd.payment-completed{background:var(--sd);color:var(--bg)}
 .nv .sd-empty{padding:18px 0;color:var(--mu)}
-@media(max-width:760px){.nv .sd-grid{grid-template-columns:1fr}.nv .sd-stats{gap:24px}}
+.nv .sd-label{margin:14px 0 0;font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
+.nv .sd-gig{border:1px solid var(--ln);border-radius:8px;padding:16px;margin-top:10px;display:flex;gap:16px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+.nv .sd-gig h4{margin:0 0 2px;font-size:1rem}
+.nv .sd-gig .m{flex:1;min-width:220px}
+.nv .sd-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.nv .sd-side small{color:var(--mu);max-width:180px;text-align:right}
+.nv .sd-line{font-size:.88rem;margin-top:4px}
+.nv .sd-line.ok{color:var(--sd);font-weight:500}
+.nv .sd-table{width:100%;border-collapse:collapse;font-size:.9rem}
+.nv .sd-table th{text-align:left;font-size:.75rem;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;padding:8px 6px;border-bottom:1px solid var(--ln)}
+.nv .sd-table td{padding:10px 6px;border-bottom:1px solid var(--ln)}
+.nv .sd-ov{position:fixed;inset:0;background:rgba(30,20,22,.5);display:grid;place-items:center;z-index:30;padding:16px}
+.nv .sd-md{background:var(--sf);color:var(--tx);border-radius:10px;padding:24px;max-width:440px;width:100%}
+.nv .sd-md h2{margin:0 0 8px}
+.nv .sd-notice{margin:0 0 16px;padding:10px 14px;border-radius:8px;background:var(--sl);color:var(--sd);font-size:.9rem}
+@media(max-width:760px){.nv .sd-grid{grid-template-columns:1fr}.nv .sd-stats{gap:24px}.nv .sd-side{align-items:flex-start}.nv .sd-side small{text-align:left}}
 `;
 
 const statusClass = (s) => (s || "").toLowerCase().replace(/\s+/g, "-");
+const rupees = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
 function formatDate(date) {
   if (!date) return "Date not set";
@@ -38,8 +58,17 @@ function formatDate(date) {
   );
 }
 
-function formatAppliedDate(date) {
-  if (!date) return "Unknown";
+function formatLong(date) {
+  if (!date) return "Date not set";
+
+  return new Date(`${date.slice(0, 10)}T12:00:00`).toLocaleDateString(
+    "en-IN",
+    { day: "numeric", month: "long", year: "numeric" }
+  );
+}
+
+function formatShort(date) {
+  if (!date) return "—";
 
   return new Date(date).toLocaleDateString("en-IN", {
     day: "numeric",
@@ -47,14 +76,28 @@ function formatAppliedDate(date) {
   });
 }
 
+// Where a gig is in its life, from the student's point of view.
+// Verification and payment are tracked separately: a gig can be verified
+// and still be waiting for its payout.
+function gigState(g) {
+  if (g.paidAt) return "Payment Completed";
+  if (g.verifiedAt) return "Payment Pending";
+  if (g.completedAt) return "Awaiting Verification";
+  return g.started ? "In Progress" : "Upcoming";
+}
+
 export default function StudentDashboard() {
   const [profile, setProfile] = useState(null);
-  const [recent, setRecent] = useState([]);
-  const [upcoming, setUpcoming] = useState([]);
+  const [gigs, setGigs] = useState([]);
   const [activeCount, setActiveCount] = useState(0);
   const [savedCount, setSavedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState("");
+
+  const [confirming, setConfirming] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [modalError, setModalError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -94,7 +137,9 @@ export default function StudentDashboard() {
       const [applicationResult, savedResult] = await Promise.all([
         supabase
           .from("applications")
-          .select("id, job_id, status, applied_at")
+          .select(
+            "id, job_id, status, applied_at, completed_at, verified_at, paid_at"
+          )
           .eq("student_id", user.id)
           .order("applied_at", { ascending: false }),
 
@@ -137,8 +182,7 @@ export default function StudentDashboard() {
       ];
 
       if (jobIds.length === 0) {
-        setRecent([]);
-        setUpcoming([]);
+        setGigs([]);
         setLoading(false);
         return;
       }
@@ -190,37 +234,17 @@ export default function StudentDashboard() {
         ])
       );
 
-      const formattedRecent = applications
-        .slice(0, 5)
+      // Local date as YYYY-MM-DD, used to tell upcoming gigs from started ones.
+      const todayISO = new Date().toLocaleDateString("en-CA");
+
+      const accepted = applications
+        .filter((application) => application.status === "Accepted")
         .map((application) => {
           const job = jobMap[application.job_id];
 
           if (!job) return null;
 
-          return {
-            id: application.id,
-            title: job.title || "Untitled job",
-            employer: employerMap[job.employer_id] || "Employer",
-            city: job.location || "Location not specified",
-            applied: formatAppliedDate(application.applied_at),
-            status: application.status || "Applied",
-          };
-        })
-        .filter(Boolean);
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const formattedUpcoming = applications
-        .filter((application) => application.status === "Accepted")
-        .map((application) => {
-          const job = jobMap[application.job_id];
-
-          if (!job || !job.date) return null;
-
-          const jobDate = new Date(`${job.date}T12:00:00`);
-
-          if (jobDate < today) return null;
+          const dateISO = job.date ? job.date.slice(0, 10) : "";
 
           return {
             id: application.id,
@@ -228,18 +252,22 @@ export default function StudentDashboard() {
             title: job.title || "Untitled job",
             employer: employerMap[job.employer_id] || "Employer",
             city: job.location || "Location not specified",
+            dateISO,
             date: formatDate(job.date),
+            dateLong: formatLong(job.date),
             hours: job.hours || "Timing not specified",
             pay: Number(job.amount) || 0,
             basis: job.basis || "shift",
+            started: Boolean(dateISO) && dateISO <= todayISO,
+            completedAt: application.completed_at,
+            verifiedAt: application.verified_at,
+            paidAt: application.paid_at,
           };
         })
-        .filter(Boolean)
-        .sort((a, b) => a.date.localeCompare(b.date));
+        .filter(Boolean);
 
       if (active) {
-        setRecent(formattedRecent);
-        setUpcoming(formattedUpcoming);
+        setGigs(accepted);
         setLoading(false);
       }
     }
@@ -250,6 +278,81 @@ export default function StudentDashboard() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!confirming) return;
+    const onKey = (e) => e.key === "Escape" && !busy && setConfirming(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [confirming, busy]);
+
+  const todayISO = new Date().toLocaleDateString("en-CA");
+
+  // Accepted gigs the student has not finished yet.
+  const activeGigs = useMemo(
+    () =>
+      gigs
+        .filter((g) => !g.completedAt)
+        .sort((a, b) => (a.dateISO || "9999").localeCompare(b.dateISO || "9999")),
+    [gigs]
+  );
+
+  // Gigs the student marked as completed (verification / payment tracked below).
+  const completedGigs = useMemo(
+    () =>
+      gigs
+        .filter((g) => g.completedAt)
+        .sort((a, b) => b.completedAt.localeCompare(a.completedAt)),
+    [gigs]
+  );
+
+  const upcoming = activeGigs.filter((g) => g.dateISO && g.dateISO >= todayISO);
+
+  const paidGigs = completedGigs
+    .filter((g) => g.paidAt)
+    .sort((a, b) => b.paidAt.localeCompare(a.paidAt));
+  const totalEarnings = paidGigs.reduce((sum, g) => sum + g.pay, 0);
+  const pendingEarnings = completedGigs
+    .filter((g) => !g.paidAt)
+    .reduce((sum, g) => sum + g.pay, 0);
+
+  function openConfirm(gig) {
+    setModalError("");
+    setConfirming(gig);
+  }
+
+  // Needs the mark_gig_completed function from backend/gig_lifecycle.sql.
+  async function confirmCompletion() {
+    if (!confirming) return;
+
+    setBusy(true);
+    setModalError("");
+
+    const { error } = await supabase.rpc("mark_gig_completed", {
+      p_application_id: String(confirming.id),
+    });
+
+    if (error) {
+      console.error(error);
+      setModalError(error.message || "Could not mark this gig as completed.");
+      setBusy(false);
+      return;
+    }
+
+    const id = confirming.id;
+    const title = confirming.title;
+
+    setGigs((current) =>
+      current.map((g) =>
+        g.id === id ? { ...g, completedAt: new Date().toISOString() } : g
+      )
+    );
+    setNotice(
+      `${title} is marked as completed. Your employer has been asked to verify it.`
+    );
+    setConfirming(null);
+    setBusy(false);
+  }
 
   return (
     <div className="nv">
@@ -297,41 +400,149 @@ export default function StudentDashboard() {
           </div>
         </section>
 
+        {notice && <p className="sd-notice" role="status">{notice}</p>}
+
         <div className="sd-grid">
-          <section className="box">
-            <div className="row sp">
-              <h3 style={{ margin: 0 }}>Recently applied</h3>
-              <a className="sd-link" href="/applications">
-                Application history →
-              </a>
-            </div>
-
-            {loading && <p className="sd-empty">Loading applications...</p>}
-
-            {!loading && recent.length === 0 && (
-              <p className="sd-empty">
-               You haven&apos;t applied for any jobs yet.
-              </p>
-            )}
-
-            {!loading && recent.map((application) => (
-              <div className="jr" key={application.id}>
-                <div className="m">
-                  <b>{application.title}</b>
-                  <div className="mu">
-                    {application.employer} · {application.city}
-                  </div>
-                  <div className="mu" style={{ fontSize: ".85rem" }}>
-                    Applied {application.applied}
-                  </div>
-                </div>
-
-                <span className={`bd ${statusClass(application.status)}`}>
-                  {application.status}
-                </span>
+          <div>
+            {/* My Accepted Gigs: the main section */}
+            <section className="box">
+              <div className="row sp">
+                <h3 style={{ margin: 0 }}>My Accepted Gigs</h3>
+                <a className="sd-link" href="/applications">
+                  Application history →
+                </a>
               </div>
-            ))}
-          </section>
+
+              <p className="sd-label">Upcoming / active gigs</p>
+
+              {loading && <p className="sd-empty">Loading gigs...</p>}
+
+              {!loading && activeGigs.length === 0 && (
+                <p className="sd-empty">
+                  No accepted gigs right now. When an employer accepts your
+                  application, it will show up here.
+                </p>
+              )}
+
+              {!loading && activeGigs.map((gig) => (
+                <article className="sd-gig" key={gig.id}>
+                  <div className="m">
+                    <h4>{gig.title}</h4>
+                    <div className="mu">{gig.employer} · {gig.city}</div>
+                    <div className="mu" style={{ fontSize: ".88rem", marginTop: 2 }}>
+                      {gig.dateLong} · {gig.hours}
+                    </div>
+                    <div style={{ marginTop: 6 }}>
+                      <b>Earnings: {rupees(gig.pay)}</b>{" "}
+                      <span className="mu">/{gig.basis}</span>
+                    </div>
+                  </div>
+
+                  <div className="sd-side">
+                    <span className={`bd ${statusClass(gigState(gig))}`}>
+                      {gigState(gig)}
+                    </span>
+                    {gig.started ? (
+                      <button className="btn sm" onClick={() => openConfirm(gig)}>
+                        ✓ Mark as Completed
+                      </button>
+                    ) : (
+                      <small>Available on the day of the gig</small>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </section>
+
+            {/* Completed gigs: verification and payment are separate steps */}
+            <section className="box" style={{ marginTop: 14 }}>
+              <h3 style={{ margin: 0 }}>Completed Gigs</h3>
+
+              {loading && <p className="sd-empty">Loading...</p>}
+
+              {!loading && completedGigs.length === 0 && (
+                <p className="sd-empty">
+                  Gigs you mark as completed appear here until they are
+                  verified and paid.
+                </p>
+              )}
+
+              {!loading && completedGigs.map((gig) => (
+                <article className="sd-gig" key={gig.id}>
+                  <div className="m">
+                    <h4>{gig.title}</h4>
+                    <div className="mu">{gig.employer}</div>
+                    <div className="mu" style={{ fontSize: ".88rem", marginTop: 2 }}>
+                      {gig.dateLong} · {rupees(gig.pay)}
+                    </div>
+
+                    {gig.verifiedAt ? (
+                      <div className="sd-line ok">✓ Job Verified</div>
+                    ) : (
+                      <div className="sd-line mu">
+                        ◷ Employer verification is pending
+                      </div>
+                    )}
+
+                    {gig.paidAt ? (
+                      <div className="sd-line ok">✓ Payment Completed</div>
+                    ) : gig.verifiedAt ? (
+                      <div className="sd-line">◷ Payment Pending</div>
+                    ) : null}
+                  </div>
+
+                  <div className="sd-side">
+                    <span className={`bd ${statusClass(gigState(gig))}`}>
+                      {gigState(gig)}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </section>
+
+            {/* My Earnings */}
+            <section className="box" style={{ marginTop: 14 }}>
+              <h3 style={{ margin: 0 }}>My Earnings</h3>
+
+              <div className="sd-stats" style={{ margin: "12px 0 14px" }}>
+                <div>
+                  <b>{loading ? "—" : rupees(totalEarnings)}</b>
+                  <span className="mu">total earnings</span>
+                </div>
+                <div>
+                  <b>{loading ? "—" : rupees(pendingEarnings)}</b>
+                  <span className="mu">pending, not paid yet</span>
+                </div>
+              </div>
+
+              {!loading && paidGigs.length === 0 && (
+                <p className="sd-empty" style={{ paddingTop: 0 }}>
+                  Paid gigs will be listed here.
+                </p>
+              )}
+
+              {!loading && paidGigs.length > 0 && (
+                <table className="sd-table">
+                  <thead>
+                    <tr>
+                      <th>Gig</th>
+                      <th>Amount</th>
+                      <th>Payment date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paidGigs.map((gig) => (
+                      <tr key={gig.id}>
+                        <td>{gig.title}</td>
+                        <td>{rupees(gig.pay)}</td>
+                        <td>{formatShort(gig.paidAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </section>
+          </div>
 
           <aside>
             <section className="box">
@@ -374,6 +585,32 @@ export default function StudentDashboard() {
           </aside>
         </div>
       </main>
+
+      {confirming && (
+        <div
+          className="sd-ov"
+          onClick={(e) => e.target === e.currentTarget && !busy && setConfirming(null)}
+        >
+          <div className="sd-md" role="dialog" aria-modal="true" aria-labelledby="sd-confirm-title">
+            <h2 id="sd-confirm-title">Have you completed this gig?</h2>
+            <p className="mu">
+              {confirming.title} · {confirming.employer} · {confirming.dateLong}
+            </p>
+            <p>Please confirm that you have finished the assigned work.</p>
+
+            {modalError && <p role="alert" style={{ color: "var(--er)" }}>{modalError}</p>}
+
+            <div className="row" style={{ justifyContent: "flex-end", marginTop: 16 }}>
+              <button className="btn s" disabled={busy} onClick={() => setConfirming(null)}>
+                Cancel
+              </button>
+              <button className="btn" disabled={busy} onClick={confirmCompletion}>
+                {busy ? "Saving..." : "Confirm Completion"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
