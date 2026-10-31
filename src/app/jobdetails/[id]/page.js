@@ -1,14 +1,22 @@
-import { notFound } from "next/navigation";
-import JOBS from "../../../data/jobs";
+
 import JobsExperience from "../../../pages/JobsExperience";
 
-export default function JobDetailsPage({ params, searchParams }) {
-  const job = JOBS.find((item) => item.id === Number(params.id));
-  const initialBackPath = searchParams.returnTo === "applications" ? "/applications" : "/browsejobs";
+export default async function JobDetailsPage({ params, searchParams }) {
+  const { id } = await params;
+  const query = await searchParams;
 
-  if (!job) {
-    notFound();
-  }
+  const initialBackPath =
+    query?.returnTo === "applications"
+      ? "/applications"
+      : query?.from === "landing"
+        ? "/"
+      : "/browsejobs";
 
-  return <JobsExperience initialJobId={job.id} initialBackPath={initialBackPath} />;
+  return (
+    <JobsExperience
+      initialJobId={id}
+      initialBackPath={initialBackPath}
+      publicView={query?.from === "landing"}
+    />
+  );
 }

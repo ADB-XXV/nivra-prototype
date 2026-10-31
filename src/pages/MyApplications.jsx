@@ -1,26 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import StudentNavbar from "../components/StudentNavbar";
+import { supabase } from "../lib/supabase";
 
-const INITIAL_APPLICATIONS = [
-  { id: 1, jobId: 1, title: "Event Assistant", company: "Malabar Events", city: "Kozhikode", schedule: "Sat, 24 Oct · 9:00 am – 5:00 pm · One day", pay: 800, applied: "16 Oct", status: "Under Review" },
-  { id: 2, jobId: 2, title: "Catering Helper", company: "Spice Route Caterers", city: "Kochi", schedule: "Sun, 25 Oct · 11:00 am – 4:00 pm · One day", pay: 700, applied: "12 Oct", status: "Accepted" },
-  { id: 3, jobId: 4, title: "Campus Event Crew", company: "Aarambh Fest Team", city: "Kozhikode", schedule: "Mon, 26 Oct · 8:00 am – 6:00 pm · One day", pay: 600, applied: "14 Oct", status: "Shortlisted" },
-  { id: 4, jobId: 3, title: "Retail Promoter", company: "Urban Cart Stores", city: "Thrissur", schedule: "Fri, 23 – Sun, 25 Oct · 10:00 am – 6:00 pm · Short term", pay: 900, applied: "18 Oct", status: "Applied" },
-  { id: 5, jobId: 5, title: "Maths Tutor, Class 10", company: "BrightPath Tuitions", city: "Malappuram", schedule: "Wed, 28 Oct · 5:00 pm – 7:00 pm · One day", pay: 500, applied: "3 Oct", status: "Completed" },
-  { id: 6, jobId: 7, title: "Banquet Server", company: "Hotel Lakeview", city: "Kochi", schedule: "Sat, 31 Oct · 6:00 pm – 11:00 pm · Short term", pay: 650, applied: "9 Oct", status: "Rejected" },
+const FILTERS = [
+  "All",
+  "Applied",
+  "Under Review",
+  "Shortlisted",
+  "Accepted",
+  "Rejected",
+  "Completed",
 ];
 
-const FILTERS = ["All", "Applied", "Under Review", "Shortlisted", "Accepted", "Rejected", "Completed"];
 const WITHDRAWABLE = ["Applied", "Under Review"];
-const NAV = [
-  ["Browse jobs", "/browsejobs"],
-  ["Saved", "/saved"],
-  ["My applications", "/applications"],
-  ["Dashboard", "/student/dashboard"],
-  ["Profile", "/student/profile"],
-];
 
 const CSS = `
 .nv-root {
@@ -116,6 +110,7 @@ const CSS = `
 .nv-btn:hover { background: #faf6f3; }
 .nv-btn.danger { color: var(--danger); border-color: var(--danger); }
 .nv-btn.danger:hover { background: #fbeeee; }
+.nv-btn:disabled { opacity: 0.5; cursor: wait; }
 .nv-slot { display: inline-block; min-width: 84px; }
 
 .nv-empty { padding: 36px 0; text-align: center; color: var(--muted); }
@@ -136,17 +131,216 @@ const CSS = `
 
 const slug = (s) => s.toLowerCase().replace(/\s+/g, "-");
 
-export default function MyApplications({ onNavigate = (path) => window.location.assign(path) }) {
-  const [applications, setApplications] = useState(INITIAL_APPLICATIONS);
+function formatDate(date) {
+  if (!date) return "Date not set";
+
+  return new Date(`${date.slice(0, 10)}T12:00:00`).toLocaleDateString(
+    "en-GB",
+    {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+    }
+  );
+}
+
+function formatAppliedDate(date) {
+  if (!date) return "Unknown";
+
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+export default function MyApplications({
+  onNavigate = (path) => window.location.assign(path),
+}) {
+  const [applications, setApplications] = useState([]);
   const [filter, setFilter] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [withdrawing, setWithdrawing] = useState(null);
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadApplications() {
+      setLoading(true);
+      setNotice("");
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        if (active) {
+          setNotice("Please log in to view your applications.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: applicationData, error: applicationError } =
+        await supabase
+          .from("applications")
+          .select("id, job_id, status, applied_at")
+          .eq("student_id", user.id)
+          .order("applied_at", { ascending: false });
+
+      if (!active) return;
+
+      if (applicationError) {
+        console.error("Could not load applications:", applicationError);
+        setNotice("Could not load your applications. Please refresh.");
+        setLoading(false);
+        return;
+      }
+
+      if (!applicationData || applicationData.length === 0) {
+        setApplications([]);
+        setLoading(false);
+        return;
+      }
+
+      const jobIds = [
+        ...new Set(applicationData.map((application) => application.job_id)),
+      ];
+
+      const { data: jobData, error: jobError } = await supabase
+        .from("jobs")
+        .select("*")
+        .in("id", jobIds);
+
+      if (!active) return;
+
+      if (jobError) {
+        console.error("Could not load application jobs:", jobError);
+        setNotice("Could not load job details. Please refresh.");
+        setLoading(false);
+        return;
+      }
+
+      const jobs = jobData || [];
+      const employerIds = [
+        ...new Set(jobs.map((job) => job.employer_id).filter(Boolean)),
+      ];
+
+      let profiles = [];
+
+      if (employerIds.length > 0) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, business, full_name")
+          .in("id", employerIds);
+
+        if (!active) return;
+
+        if (profileError) {
+          console.error("Could not load employer profiles:", profileError);
+        } else {
+          profiles = profileData || [];
+        }
+      }
+
+      const jobById = Object.fromEntries(
+        jobs.map((job) => [job.id, job])
+      );
+
+      const profileById = Object.fromEntries(
+        profiles.map((profile) => [profile.id, profile])
+      );
+
+      const formattedApplications = applicationData
+        .map((application) => {
+          const job = jobById[application.job_id];
+
+          if (!job) return null;
+
+          const employer = profileById[job.employer_id];
+
+          return {
+            id: application.id,
+            jobId: job.id,
+            title: job.title || "Untitled job",
+            company:
+              employer?.business ||
+              employer?.full_name ||
+              "Employer",
+            city: job.location || "Location not specified",
+            schedule: `${formatDate(job.date)} · ${
+              job.hours || "Timing not specified"
+            }`,
+            pay: Number(job.amount) || 0,
+            basis: job.basis || "shift",
+            applied: formatAppliedDate(application.applied_at),
+            status: application.status || "Applied",
+          };
+        })
+        .filter(Boolean);
+
+      if (active) {
+        setApplications(formattedApplications);
+        setLoading(false);
+      }
+    }
+
+    loadApplications();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const countFor = (f) =>
-    f === "All" ? applications.length : applications.filter((a) => a.status === f).length;
+    f === "All"
+      ? applications.length
+      : applications.filter((a) => a.status === f).length;
 
   const visible =
-    filter === "All" ? applications : applications.filter((a) => a.status === filter);
+    filter === "All"
+      ? applications
+      : applications.filter((a) => a.status === filter);
 
-  const withdraw = (id) => setApplications((list) => list.filter((a) => a.id !== id));
+  async function withdraw(id) {
+    if (withdrawing) return;
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      setNotice("Your session has expired. Please log in again.");
+      return;
+    }
+
+    setWithdrawing(id);
+    setNotice("");
+
+    const { data: deletedApplication, error } = await supabase
+  .from("applications")
+  .delete()
+  .eq("id", id)
+  .eq("student_id", user.id)
+  .select("id")
+  .maybeSingle();
+
+if (error || !deletedApplication) {
+  console.error("Could not withdraw application:", error);
+  setNotice(
+    error
+      ? `Could not withdraw application: ${error.message}`
+      : "This application could not be withdrawn. Its status may have changed."
+  );
+} else {
+  setApplications((list) => list.filter((a) => a.id !== id));
+  setNotice("Application withdrawn successfully.");
+}
+
+    setWithdrawing(null);
+  }
 
   return (
     <div className="nv-root">
@@ -171,46 +365,72 @@ export default function MyApplications({ onNavigate = (path) => window.location.
           ))}
         </div>
 
-        <section className="nv-card">
-          {visible.length === 0 && (
-            <div className="nv-empty">No applications with this status yet.</div>
-          )}
-          {visible.map((a) => (
-            <article className="nv-row" key={a.id}>
-              <div className="nv-info">
-                <h2 className="nv-job-title">{a.title}</h2>
-                <p className="nv-job-sub">
-                  {a.company} · {a.city}
-                </p>
-                <p className="nv-job-meta">{a.schedule}</p>
-              </div>
+        {notice && (
+          <p role="status" style={{ color: "#67464a", margin: "12px 0" }}>
+            {notice}
+          </p>
+        )}
 
-              <div className="nv-side">
-                <span className="nv-pay">
-                  ₹{a.pay}
-                  <small>/day</small>
-                </span>
-                <span className="nv-applied">Applied {a.applied}</span>
-                <span className={`nv-badge ${slug(a.status)}`}>{a.status}</span>
-                <button type="button" className="nv-btn" onClick={() => onNavigate(`/jobdetails/${a.jobId}?returnTo=applications`)}>
-                  View job
-                </button>
-                {WITHDRAWABLE.includes(a.status) ? (
-                  <button type="button" className="nv-btn danger" onClick={() => withdraw(a.id)}>
-                    Withdraw
+        <section className="nv-card">
+          {loading && (
+            <div className="nv-empty">Loading your applications...</div>
+          )}
+
+          {!loading && visible.length === 0 && (
+            <div className="nv-empty">
+              {applications.length === 0
+                ? "You haven't applied for any jobs yet."
+                : "No applications with this status yet."}
+            </div>
+          )}
+
+          {!loading &&
+            visible.map((a) => (
+              <article className="nv-row" key={a.id}>
+                <div className="nv-info">
+                  <h2 className="nv-job-title">{a.title}</h2>
+                  <p className="nv-job-sub">
+                    {a.company} · {a.city}
+                  </p>
+                  <p className="nv-job-meta">{a.schedule}</p>
+                </div>
+
+                <div className="nv-side">
+                  <span className="nv-pay">
+                    ₹{a.pay}
+                    <small>/{a.basis}</small>
+                  </span>
+                  <span className="nv-applied">Applied {a.applied}</span>
+                  <span className={`nv-badge ${slug(a.status)}`}>
+                    {a.status}
+                  </span>
+                  <button
+                    type="button"
+                    className="nv-btn"
+                    onClick={() =>
+                      onNavigate(
+                        `/jobdetails/${a.jobId}?returnTo=applications`
+                      )
+                    }
+                  >
+                    View job
                   </button>
-                ) : null}
-              </div>
-            </article>
-          ))}
+
+                  {WITHDRAWABLE.includes(a.status) && (
+                    <button
+                      type="button"
+                      className="nv-btn danger"
+                      disabled={withdrawing === a.id}
+                      onClick={() => withdraw(a.id)}
+                    >
+                      {withdrawing === a.id ? "Withdrawing..." : "Withdraw"}
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
         </section>
       </main>
-
-      <footer className="nv-footer">
-        <p>
-          <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow. 
-        </p>
-      </footer>
     </div>
   );
 }

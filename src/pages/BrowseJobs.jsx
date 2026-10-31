@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import JOBS from "../data/jobs";
 import StudentNavbar from "../components/StudentNavbar";
+import Navbar from "../components/Navbar";
 
 /* =====================================================================
    Nivra · Page 3 of 16 · Browse jobs
@@ -11,15 +12,19 @@ const rupee = (n) => "₹" + n.toLocaleString("en-IN");
 const jobDays = (job) => (job.dateLabel.match(/\d+/g) || []).map(Number);
 
 /* ---------- Page ---------- */
+
 export default function BrowseJobs({
   jobs: availableJobs = JOBS,
   onView = (job) => window.location.assign(`/jobdetails/${job.id}`),
   savedJobs = [],
   toggleSaved = () => {},
-  activeTab = "Browse jobs",
+  saveError = "",
+  publicView = false,
+  initialSearch = "",
+  initialLocation = "",
 }) {
-  const [q, setQ] = useState("");
-  const [loc, setLoc] = useState("");
+  const [q, setQ] = useState(initialSearch);
+  const [loc, setLoc] = useState(initialLocation);
   const [sort, setSort] = useState("soonest");
   const [category, setCategory] = useState("All");
   const [date, setDate] = useState("any");
@@ -43,16 +48,23 @@ export default function BrowseJobs({
         if (date === "week" && Math.min(...days) > 30) return false;
         return true;
       })
-      .sort((a, b) => (sort === "pay"
-        ? b.pay - a.pay
-        : Math.min(...jobDays(a)) - Math.min(...jobDays(b)) || a.id - b.id));
-  }, [availableJobs, q, loc, sort, category, date, minPay, type]);
+      .sort((a, b) =>
+  sort === "pay"
+    ? b.pay - a.pay
+    : Math.min(...jobDays(a)) - Math.min(...jobDays(b)) ||
+      String(a.id).localeCompare(String(b.id))
+);
+}, [availableJobs, q, loc, sort, category, date, minPay, type]);
 
   return (
     <div className="nivra">
       <style>{css}</style>
 
-      <StudentNavbar active="/browsejobs" />
+      {publicView ? (
+        <Navbar role="public" />
+      ) : (
+        <StudentNavbar active="/browsejobs" />
+      )}
 
       {/* Content */}
       <main>
@@ -98,6 +110,7 @@ export default function BrowseJobs({
 
           <section>
             <div className="count">{jobs.length} {jobs.length === 1 ? "job" : "jobs"}</div>
+            {saveError && <p role="alert">{saveError}</p>}
             <div className="list">
               {jobs.length === 0 && <div className="empty">No jobs match your filters.</div>}
               {jobs.map((j) => {
@@ -122,10 +135,6 @@ export default function BrowseJobs({
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="footer">
-        <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
-      </footer>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import "../styles/EmployerDashboard.css";
 
 
-export default function PostJob({ onSubmit, onCancel }) {
+export default function PostJob({ onSubmit, onCancel, employerName }) {
   const [form, setForm] = useState({
     title: "Event Assistant",
     category: "Event assistance",
@@ -24,15 +24,25 @@ export default function PostJob({ onSubmit, onCancel }) {
     setForm((previous) => ({ ...previous, [name]: value }));
   }
 
-  function publish() {
-    const workers = Number(form.workers);
-    const amount = Number(form.amount);
-    if (!form.title.trim() || !form.location.trim() || !form.date ||
-        !Number.isInteger(workers) || workers < 1 || !Number.isFinite(amount) || amount <= 0) {
-      return;
-    }
+  
+async function publish() {
+  const workers = Number(form.workers);
+  const amount = Number(form.amount);
 
-    onSubmit?.({
+  if (
+    !form.title.trim() ||
+    !form.location.trim() ||
+    !form.date ||
+    !Number.isInteger(workers) ||
+    workers < 1 ||
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
+    return;
+  }
+
+  try {
+    await onSubmit?.({
       ...form,
       workers,
       amount,
@@ -41,8 +51,13 @@ export default function PostJob({ onSubmit, onCancel }) {
       filled: 0,
       salary: `₹${amount} ${form.basis.toLowerCase()}`,
     });
+
     setPreview(false);
+  } catch (error) {
+    console.error("Publishing failed:", error);
   }
+}
+
 
   function field(label, name, placeholder = "", type = "text") {
     return (
@@ -142,7 +157,7 @@ export default function PostJob({ onSubmit, onCancel }) {
           <section className="preview-modal reference-preview" role="dialog" aria-modal="true" aria-labelledby="job-preview-title" onClick={(event) => event.stopPropagation()}>
             <h2 id="job-preview-title">Preview</h2>
             <strong className="reference-job-title">{form.title}</strong>
-            <p>Malabar Events · {form.location}</p>
+           <p>{employerName || "Your business"} · {form.location}</p>
             <p>
               {new Date(`${form.date}T12:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" })}
               {" · "}{form.hours}{" · ₹"}{form.amount}
@@ -150,8 +165,21 @@ export default function PostJob({ onSubmit, onCancel }) {
               {" · "}{form.workers} workers
             </p>
             <div className="reference-preview-actions">
-              <button type="button" className="button button-primary" onClick={publish}>Publish</button>
-              <button type="button" className="button button-secondary" onClick={() => setPreview(false)}>Edit</button>
+             <button
+  type="button"
+  className="button button-secondary"
+  onClick={() => setPreview(false)}
+>
+  Edit job
+</button>
+
+<button
+  type="button"
+  className="button button-primary"
+  onClick={publish}
+>
+  Publish job
+</button>
             </div>
           </section>
         </div>

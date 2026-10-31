@@ -1,37 +1,112 @@
+
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/StudentProfile.css";
 import StudentNavbar from "../components/StudentNavbar";
+import { supabase } from "../lib/supabase";
 
 export default function StudentProfile() {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const [name, setName] = useState("Anjali Nair");
+  const [userId, setUserId] = useState(null);
 
-  const [education, setEducation] = useState(
-    "B.Com, 2nd year - St. Joseph's College, Devagiri"
-  );
+  const [name, setName] = useState("");
+  const [education, setEducation] = useState("");
+  const [skills, setSkills] = useState("");
+  const [experience, setExperience] = useState("");
+  const [categories, setCategories] = useState("");
+  const [availability, setAvailability] = useState("");
+  const [location, setLocation] = useState("");
 
-  const [skills, setSkills] = useState(
-    "Registration desk, Crowd handling, Billing, Hindi, Malayalam, English"
-  );
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
-  const [experience, setExperience] = useState(
-    "Volunteer, Aarambh Fest 2025; Registration desk, 2 days\nRetail assistant, Mini Mart; Weekends, 2 months"
-  );
+  async function loadProfile() {
+    setLoading(true);
+    setMessage("");
 
-  const [categories, setCategories] = useState(
-    "Event assistance, Campus events, Retail"
-  );
+    const { data: { user }, error: authError } =
+      await supabase.auth.getUser();
 
-  const [availability, setAvailability] = useState(
-    "Weekends and college holidays, Weekdays after 4 pm"
-  );
+    if (authError || !user) {
+      setMessage("Please log in to view your profile.");
+      setLoading(false);
+      return;
+    }
 
-  const [location, setLocation] = useState(
-    "Kozhikode (up to 15 km)"
-  );
+    setUserId(user.id);
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      setMessage("Could not load your profile: " + error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data.role !== "student") {
+      setMessage("This page is only available to student accounts.");
+      setLoading(false);
+      return;
+    }
+
+    setName(data.full_name || "");
+    setEducation(data.education || "");
+    setSkills(data.skills || "");
+    setExperience(data.experience || "");
+    setCategories(data.preferred_categories || "");
+    setAvailability(data.availability || "");
+    setLocation(data.city || "");
+
+    setLoading(false);
+  }
+
+  async function saveProfile() {
+    if (!userId) return;
+
+    setSaving(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: name,
+        education: education,
+        skills: skills,
+        experience: experience,
+        preferred_categories: categories,
+        availability: availability,
+        city: location
+      })
+      .eq("id", userId);
+
+    if (error) {
+      setMessage("Could not save profile: " + error.message);
+      setSaving(false);
+      return;
+    }
+
+    setMessage("Profile updated successfully!");
+    setIsEditing(false);
+    setSaving(false);
+  }
+
+  if (loading) {
+    return <div className="nivra-profile">Loading profile...</div>;
+  }
+
+  if (!userId) {
+    return <div className="nivra-profile">{message}</div>;
+  }
 
   return (
     <div className="nivra-profile">
@@ -153,10 +228,24 @@ export default function StudentProfile() {
             <button
               type="button"
               className="edit-button"
-              onClick={() => setIsEditing((previous) => !previous)}
+              disabled={saving}
+              onClick={() => {
+                if (isEditing) {
+                  saveProfile();
+                } else {
+                  setMessage("");
+                  setIsEditing(true);
+                }
+              }}
             >
-              {isEditing ? "Done editing" : "Edit profile"}
+              {saving
+                ? "Saving..."
+                : isEditing
+                ? "Done editing"
+                : "Edit profile"}
             </button>
+
+            {message && <p role="status">{message}</p>}
 
             <div className="profile-card preferences-card">
               <h3>Preferred categories</h3>
@@ -189,11 +278,6 @@ export default function StudentProfile() {
           </aside>
         </div>
       </main>
-
-      <footer className="nivra-footer">
-        <strong>Nivra</strong> · Find work for a day. Build experience for
-        tomorrow.
-      </footer>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "../lib/supabase";
 
 // Self-contained: no other files needed. Styles are scoped under .nv so they
 // won't clash with the rest of your app.
@@ -77,6 +78,8 @@ export default function Login({
   const [values, setValues] = useState({});
   const [errors, setErrors] = useState({});
   const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const fields = fieldsFor(mode, role);
   const isLogin = mode === "login";
@@ -86,14 +89,81 @@ export default function Login({
     if (errors[name]) setErrors((e) => ({ ...e, [name]: undefined }));
   };
 
-  const submit = (e) => {
-    e.preventDefault();
-    const found = validate(fields, values);
-    setErrors(found);
-    if (Object.keys(found).length) return;
-    // Prototype only: no backend yet. Replace with a real auth call later.
-    onNavigate(role === "employer" ? "/employer/dashboard" : "/applications");
-  };
+  
+const submit = async (e) => {
+  e.preventDefault();
+
+  const found = validate(fields, values);
+  setErrors(found);
+  setMessage("");
+
+  if (Object.keys(found).length) return;
+
+  setLoading(true);
+
+  try {
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email.trim(),
+        password: values.password,
+        options: {
+          data: {
+            role,
+            fullName: values.fullName || null,
+            college: values.college || null,
+            business: values.business || null,
+            city: values.city || null,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.session) {
+        onNavigate(
+          role === "employer"
+            ? "/employer/dashboard"
+            : "/student/dashboard"
+        );
+      } else {
+        setMessage(
+          "Account created! Check your email to confirm your account before logging in."
+        );
+      }
+    } else {
+      const { data, error } =
+        await supabase.auth.signInWithPassword({
+          email: values.email.trim(),
+          password: values.password,
+        });
+
+      if (error) throw error;
+
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+
+      if (profileError) {
+        await supabase.auth.signOut();
+        throw new Error("Could not load your profile. Please try again.");
+      }
+
+      onNavigate(
+        profile.role === "employer"
+          ? "/employer/dashboard"
+          : "/student/dashboard"
+      );
+    }
+  } catch (error) {
+    setMessage(error.message || "Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const switchMode = (m) => { setMode(m); setErrors({}); };
   const switchRole = (r) => { setRole(r); setErrors({}); };
@@ -173,19 +243,25 @@ export default function Login({
               </div>
             );
           })}
-
-          <button type="submit" className="btn" style={{ width: "100%", marginTop: 18 }}>
-            {isLogin ? "Log in" : "Create account"}
-          </button>
+          {message && (
+  <p className="hint" role="status" aria-live="polite">
+    {message}
+  </p>
+)}
+         <button
+  type="submit"
+  className="btn"
+  style={{ width: "100%", marginTop: 18 }}
+  disabled={loading}
+>
+  {loading
+    ? "Please wait..."
+    : isLogin
+      ? "Log in"
+      : "Create account"}
+</button>
         </form>
       </main>
-
-      <footer className="foot">
-        <div className="w">
-          <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
-          <p>Prototype with sample data. Employers, jobs and students are fictional.</p>
-        </div>
-      </footer>
     </div>
   );
 }
