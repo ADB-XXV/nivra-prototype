@@ -8,6 +8,15 @@ import BrowseJobs from "./BrowseJobs";
 import JobDetails from "./JobDetails";
 import JOBS from "../data/jobs";
 
+function getToday() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 function convertJob(job) {
   return {
     ...job,
@@ -106,27 +115,58 @@ export default function JobsExperience({
         }
       }
 
-      const { data, error: jobsError } = await supabase
-        .from("jobs")
-        .select(`
-          *,
-          employer:profiles!jobs_employer_id_fkey (
-            business,
-            full_name
-          )
-        `)
-        .eq("status", "Active")
-        .order("created_at", { ascending: false });
+      const today = getToday();
+
+      const [jobsResult, countsResult] = await Promise.all([
+        supabase
+          .from("jobs")
+          .select(`
+            *,
+            employer:profiles!jobs_employer_id_fkey (
+              business,
+              full_name
+            )
+          `)
+          .eq("status", "Active")
+          .gte("date", today)
+          .order("created_at", { ascending: false }),
+
+        supabase.rpc("get_active_job_fill_counts"),
+      ]);
 
       if (!active) return;
 
-      if (jobsError) {
-        console.error("Error loading jobs:", jobsError);
+      if (jobsResult.error) {
+        console.error("Error loading jobs:", jobsResult.error);
         setError("Could not load jobs. Please try again.");
-      } else {
-        setJobs((data || []).map(convertJob));
+        setLoading(false);
+        return;
       }
 
+      if (countsResult.error) {
+        console.error("Error loading employee counts:", countsResult.error);
+        setError("Could not check job availability. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      const countMap = Object.fromEntries(
+        (countsResult.data || []).map((item) => [
+          item.job_id,
+          Number(item.accepted_count),
+        ])
+      );
+
+      const availableJobs = (jobsResult.data || []).filter((job) => {
+        const requiredWorkers = Number(job.workers);
+        const acceptedWorkers = countMap[job.id] || 0;
+
+        if (requiredWorkers <= 0) return false;
+
+        return acceptedWorkers < requiredWorkers;
+      });
+
+      setJobs(availableJobs.map(convertJob));
       setLoading(false);
     }
 

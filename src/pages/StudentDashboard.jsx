@@ -76,9 +76,6 @@ function formatShort(date) {
   });
 }
 
-// Where a gig is in its life, from the student's point of view.
-// Verification and payment are tracked separately: a gig can be verified
-// and still be waiting for its payout.
 function gigState(g) {
   if (g.paidAt) return "Payment Completed";
   if (g.verifiedAt) return "Payment Pending";
@@ -174,6 +171,33 @@ export default function StudentDashboard() {
 
       setSavedCount(savedJobs.length);
 
+      // Load the student's own payment records.
+      let paymentRows = [];
+
+      if (applications.length > 0) {
+        const { data, error } = await supabase
+          .from("payments")
+          .select("application_id, student_amount, status, paid_at")
+          .eq("student_id", user.id)
+          .in(
+            "application_id",
+            applications.map((application) => application.id)
+          );
+
+        if (!active) return;
+
+        if (error) {
+          console.error("Could not load student payments:", error);
+          setDashboardError("Could not load your payment details.");
+        } else {
+          paymentRows = data || [];
+        }
+      }
+
+      const paymentMap = Object.fromEntries(
+        paymentRows.map((payment) => [payment.application_id, payment])
+      );
+
       const jobIds = [
         ...new Set([
           ...applications.map((application) => application.job_id),
@@ -234,16 +258,18 @@ export default function StudentDashboard() {
         ])
       );
 
-      // Local date as YYYY-MM-DD, used to tell upcoming gigs from started ones.
       const todayISO = new Date().toLocaleDateString("en-CA");
 
-      const accepted = applications
-        .filter((application) => application.status === "Accepted")
+     const accepted = applications
+  .filter((application) =>
+    ["Accepted", "Completed"].includes(application.status)
+  )
         .map((application) => {
           const job = jobMap[application.job_id];
 
           if (!job) return null;
 
+          const payment = paymentMap[application.id];
           const dateISO = job.date ? job.date.slice(0, 10) : "";
 
           return {
@@ -257,11 +283,23 @@ export default function StudentDashboard() {
             dateLong: formatLong(job.date),
             hours: job.hours || "Timing not specified",
             pay: Number(job.amount) || 0,
+            receivedAmount: Number(payment?.student_amount) || 0,
+            expectedAmount:
+              payment?.student_amount != null
+                ? Number(payment.student_amount)
+                : Math.round((Number(job.amount) || 0) * 0.967 * 100) / 100,
+            paymentStatus:
+              payment?.status || (application.paid_at ? "Paid" : null),
             basis: job.basis || "shift",
             started: Boolean(dateISO) && dateISO <= todayISO,
             completedAt: application.completed_at,
             verifiedAt: application.verified_at,
-            paidAt: application.paid_at,
+            paidAt:
+              payment?.status === "Paid"
+                ? payment.paid_at || application.paid_at
+                : !payment
+                  ? application.paid_at
+                  : null,
           };
         })
         .filter(Boolean);
@@ -281,23 +319,25 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     if (!confirming) return;
+
     const onKey = (e) => e.key === "Escape" && !busy && setConfirming(null);
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [confirming, busy]);
 
   const todayISO = new Date().toLocaleDateString("en-CA");
 
-  // Accepted gigs the student has not finished yet.
   const activeGigs = useMemo(
     () =>
       gigs
         .filter((g) => !g.completedAt)
-        .sort((a, b) => (a.dateISO || "9999").localeCompare(b.dateISO || "9999")),
+        .sort((a, b) =>
+          (a.dateISO || "9999").localeCompare(b.dateISO || "9999")
+        ),
     [gigs]
   );
 
-  // Gigs the student marked as completed (verification / payment tracked below).
   const completedGigs = useMemo(
     () =>
       gigs
@@ -306,22 +346,28 @@ export default function StudentDashboard() {
     [gigs]
   );
 
-  const upcoming = activeGigs.filter((g) => g.dateISO && g.dateISO >= todayISO);
+  const upcoming = activeGigs.filter(
+    (g) => g.dateISO && g.dateISO >= todayISO
+  );
 
   const paidGigs = completedGigs
     .filter((g) => g.paidAt)
     .sort((a, b) => b.paidAt.localeCompare(a.paidAt));
-  const totalEarnings = paidGigs.reduce((sum, g) => sum + g.pay, 0);
+
+  const totalEarnings = paidGigs.reduce(
+    (sum, g) => sum + g.receivedAmount,
+    0
+  );
+
   const pendingEarnings = completedGigs
     .filter((g) => !g.paidAt)
-    .reduce((sum, g) => sum + g.pay, 0);
+    .reduce((sum, g) => sum + g.expectedAmount, 0);
 
   function openConfirm(gig) {
     setModalError("");
     setConfirming(gig);
   }
 
-  // Needs the mark_gig_completed function from backend/gig_lifecycle.sql.
   async function confirmCompletion() {
     if (!confirming) return;
 
@@ -347,9 +393,11 @@ export default function StudentDashboard() {
         g.id === id ? { ...g, completedAt: new Date().toISOString() } : g
       )
     );
+
     setNotice(
       `${title} is marked as completed. Your employer has been asked to verify it.`
     );
+
     setConfirming(null);
     setBusy(false);
   }
@@ -404,7 +452,6 @@ export default function StudentDashboard() {
 
         <div className="sd-grid">
           <div>
-            {/* My Accepted Gigs: the main section */}
             <section className="box">
               <div className="row sp">
                 <h3 style={{ margin: 0 }}>My Accepted Gigs</h3>
@@ -454,7 +501,6 @@ export default function StudentDashboard() {
               ))}
             </section>
 
-            {/* Completed gigs: verification and payment are separate steps */}
             <section className="box" style={{ marginTop: 14 }}>
               <h3 style={{ margin: 0 }}>Completed Gigs</h3>
 
@@ -485,7 +531,15 @@ export default function StudentDashboard() {
                     )}
 
                     {gig.paidAt ? (
-                      <div className="sd-line ok">✓ Payment Completed</div>
+                      <>
+                        <div className="sd-line ok">✓ Payment Completed</div>
+                        <div className="sd-line">
+                          Amount received: <b>{rupees(gig.receivedAmount)}</b>
+                        </div>
+                        <div className="sd-line mu">
+                          Paid on: {formatShort(gig.paidAt)}
+                        </div>
+                      </>
                     ) : gig.verifiedAt ? (
                       <div className="sd-line">◷ Payment Pending</div>
                     ) : null}
@@ -500,7 +554,6 @@ export default function StudentDashboard() {
               ))}
             </section>
 
-            {/* My Earnings */}
             <section className="box" style={{ marginTop: 14 }}>
               <h3 style={{ margin: 0 }}>My Earnings</h3>
 
@@ -526,7 +579,7 @@ export default function StudentDashboard() {
                   <thead>
                     <tr>
                       <th>Gig</th>
-                      <th>Amount</th>
+                      <th>Amount received</th>
                       <th>Payment date</th>
                     </tr>
                   </thead>
@@ -534,7 +587,7 @@ export default function StudentDashboard() {
                     {paidGigs.map((gig) => (
                       <tr key={gig.id}>
                         <td>{gig.title}</td>
-                        <td>{rupees(gig.pay)}</td>
+                        <td>{rupees(gig.receivedAmount)}</td>
                         <td>{formatShort(gig.paidAt)}</td>
                       </tr>
                     ))}
@@ -589,22 +642,39 @@ export default function StudentDashboard() {
       {confirming && (
         <div
           className="sd-ov"
-          onClick={(e) => e.target === e.currentTarget && !busy && setConfirming(null)}
+          onClick={(e) =>
+            e.target === e.currentTarget && !busy && setConfirming(null)
+          }
         >
-          <div className="sd-md" role="dialog" aria-modal="true" aria-labelledby="sd-confirm-title">
+          <div
+            className="sd-md"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sd-confirm-title"
+          >
             <h2 id="sd-confirm-title">Have you completed this gig?</h2>
             <p className="mu">
               {confirming.title} · {confirming.employer} · {confirming.dateLong}
             </p>
             <p>Please confirm that you have finished the assigned work.</p>
 
-            {modalError && <p role="alert" style={{ color: "var(--er)" }}>{modalError}</p>}
+            {modalError && (
+              <p role="alert" style={{ color: "var(--er)" }}>{modalError}</p>
+            )}
 
             <div className="row" style={{ justifyContent: "flex-end", marginTop: 16 }}>
-              <button className="btn s" disabled={busy} onClick={() => setConfirming(null)}>
+              <button
+                className="btn s"
+                disabled={busy}
+                onClick={() => setConfirming(null)}
+              >
                 Cancel
               </button>
-              <button className="btn" disabled={busy} onClick={confirmCompletion}>
+              <button
+                className="btn"
+                disabled={busy}
+                onClick={confirmCompletion}
+              >
                 {busy ? "Saving..." : "Confirm Completion"}
               </button>
             </div>

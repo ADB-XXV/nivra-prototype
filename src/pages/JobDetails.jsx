@@ -154,7 +154,26 @@ export default function JobDetail({
         setApplyMessage("Please log in to apply.");
         return;
       }
+const { data: profile, error: profileError } = await supabase
+  .from("profiles")
+  .select("id, role")
+  .eq("id", user.id)
+  .maybeSingle();
 
+const { data: visibleJob, error: jobError } = await supabase
+  .from("jobs")
+  .select("id, status")
+  .eq("id", job.id)
+  .maybeSingle();
+
+console.log("APPLICATION RLS DEBUG:", {
+  loggedInUserId: user.id,
+  profile,
+  profileError,
+  selectedJobId: job.id,
+  visibleJob,
+  jobError,
+});
       const { error } = await supabase
         .from("applications")
         .insert({

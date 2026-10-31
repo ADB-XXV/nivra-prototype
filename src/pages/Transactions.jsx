@@ -1,45 +1,49 @@
+
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import EmployerNavbar from "../components/EmployerNavbar";
+import { supabase } from "../lib/supabase";
 
-// Sample data only. When ready, move these into ../data/transactions.js
-// (same pattern as INITIAL_APPLICANTS). All names and amounts are fictional.
-
-// Student pressed "Completed" in their dashboard; employer has not verified yet.
-const INITIAL_AWAITING = [
-  { id: 1, name: "Anjali Nair", job: "Event Assistant", worked: "Sat, 17 Oct", hours: "9:00 AM – 5:00 PM", amount: 800 },
-  { id: 3, name: "Fathima Shereen", job: "Event Assistant", worked: "Sat, 17 Oct", hours: "9:00 AM – 3:00 PM", amount: 600 },
-];
-
-// Employer verified the job and rated the student, but has not paid yet.
-const INITIAL_DUE = [
-  { id: 2, name: "Rohit Das", job: "Stage Crew", worked: "Sun, 18 Oct", hours: "10:00 AM – 6:00 PM", amount: 700, rating: 5, review: "", tags: ["Punctual"] },
-];
-
-const INITIAL_HISTORY = [
-  { id: 101, name: "Arjun Menon", job: "Event Assistant", paidOn: "12 Oct", ref: "NV-TXN-0098", amount: 800, fee: 80, rating: 4 },
-  { id: 102, name: "Neha Pillai", job: "Stage Crew", paidOn: "6 Oct", ref: "NV-TXN-0091", amount: 700, fee: 70, rating: 5 },
-  { id: 103, name: "Anjali Nair", job: "Campus Event Crew", paidOn: "29 Sep", ref: "NV-TXN-0084", amount: 600, fee: 60, rating: 5 },
-];
-
-const TODAY = "30 Oct"; // prototype "today"
-const FEE_RATE = 0.1; // illustrative 10% service fee, not a validated commercial figure
+const FEE_RATE = 3.3;
 const TAGS = ["Punctual", "Professional", "Hardworking", "Good communication", "Skilled"];
-const REASONS = ["The student did not attend", "The student left before finishing the job", "Something else went wrong"];
+const REASONS = [
+  "The student did not attend",
+  "The student left before finishing the job",
+  "Something else went wrong",
+];
 
-const rupees = (n) => `₹${n.toLocaleString("en-IN")}`;
-const feeOf = (amount) => Math.round(amount * FEE_RATE);
-const initials = (name) => name.split(" ").map((p) => p[0]).slice(0, 2).join("");
-const stars = (n) => "★".repeat(n) + "☆".repeat(5 - n);
+const rupees = (n) =>
+  `₹${Number(n || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
+
+const initials = (name) =>
+  (name || "Student").split(" ").map((p) => p[0]).slice(0, 2).join("");
+
+const stars = (n) => "★".repeat(n || 0) + "☆".repeat(5 - (n || 0));
+
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 function Candidate({ name, id }) {
   return (
     <div className="tr-candidate">
       <div className="tr-avatar">{initials(name)}</div>
       <strong>
-        <Link className="tr-name" href={`/candidate-profile?id=${id}`}>{name}</Link>
+        <Link className="tr-name" href={`/candidate-profile?id=${id}`}>
+          {name}
+        </Link>
       </strong>
     </div>
   );
@@ -49,8 +53,15 @@ function StarPicker({ value, onChange }) {
   return (
     <div className="tr-stars" role="radiogroup" aria-label="Rating out of 5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={`${n} ${n === 1 ? "star" : "stars"}`}
-          className={n <= value ? "on" : ""} onClick={() => onChange(n)}>
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={value === n}
+          aria-label={`${n} ${n === 1 ? "star" : "stars"}`}
+          className={n <= value ? "on" : ""}
+          onClick={() => onChange(n)}
+        >
           ★
         </button>
       ))}
@@ -58,30 +69,40 @@ function StarPicker({ value, onChange }) {
   );
 }
 
-function PaymentSummary({ amount }) {
-  const fee = feeOf(amount);
+function PaymentSummary({ amount, fee, studentAmount }) {
   return (
     <table className="tr-sum">
       <tbody>
-        <tr><td>Student payment</td><td>{rupees(amount)}</td></tr>
-        <tr><td>Nivra commission (10%, sample)</td><td>{rupees(fee)}</td></tr>
-        <tr className="total"><td>Total employer payment</td><td>{rupees(amount + fee)}</td></tr>
+        <tr>
+          <td>Total employer payment</td>
+          <td>{rupees(amount)}</td>
+        </tr>
+        <tr>
+          <td>Nivra commission (3.3%)</td>
+          <td>{rupees(fee)}</td>
+        </tr>
+        <tr className="total">
+          <td>Student receives</td>
+          <td>{rupees(studentAmount)}</td>
+        </tr>
       </tbody>
     </table>
   );
 }
 
 export default function Transactions() {
-  const [awaiting, setAwaiting] = useState(() => [...INITIAL_AWAITING]);
-  const [due, setDue] = useState(() => [...INITIAL_DUE]);
-  const [history, setHistory] = useState(() => [...INITIAL_HISTORY]);
-  const [disputes, setDisputes] = useState([]);
+  const [awaiting, setAwaiting] = useState([]);
+  const [due, setDue] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [disputes] = useState([]);
   const [search, setSearch] = useState("");
   const [notice, setNotice] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // Modal: { mode: "verify" | "pay", row }
   const [modal, setModal] = useState(null);
-  const [answer, setAnswer] = useState(""); // "yes" | "no"
+  const [answer, setAnswer] = useState("");
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [tags, setTags] = useState([]);
@@ -90,76 +111,337 @@ export default function Transactions() {
   const [evidence, setEvidence] = useState("");
   const [error, setError] = useState("");
 
+  const loadTransactions = useCallback(async () => {
+    setLoading(true);
+    setPageError("");
+
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError) throw authError;
+      if (!user) throw new Error("Please log in again to view transactions.");
+
+      const { data: jobs, error: jobsError } = await supabase
+        .from("jobs")
+        .select("id, employer_id, title, date, hours, amount")
+        .eq("employer_id", user.id);
+
+      if (jobsError) throw jobsError;
+
+      const jobList = jobs || [];
+      const jobMap = Object.fromEntries(jobList.map((job) => [job.id, job]));
+      const jobIds = jobList.map((job) => job.id);
+
+      if (jobIds.length === 0) {
+        setAwaiting([]);
+        setDue([]);
+        setHistory([]);
+        setLoading(false);
+        return;
+      }
+
+      const [
+        { data: applications, error: applicationsError },
+        { data: payments, error: paymentsError },
+      ] = await Promise.all([
+        supabase
+          .from("applications")
+          .select(
+            "id, job_id, student_id, status, applied_at, completed_at, verified_at, paid_at, rating, review, review_tags"
+          )
+          .in("job_id", jobIds),
+
+        supabase
+          .from("payments")
+          .select(
+            "id, application_id, job_id, employer_id, student_id, amount, platform_fee, student_amount, status, payment_reference, paid_at, created_at, commission_rate"
+          )
+          .eq("employer_id", user.id),
+      ]);
+
+      if (applicationsError) throw applicationsError;
+      if (paymentsError) throw paymentsError;
+
+      const applicationList = applications || [];
+      const paymentList = payments || [];
+
+      const studentIds = [
+        ...new Set([
+          ...applicationList.map((a) => a.student_id),
+          ...paymentList.map((p) => p.student_id),
+        ]),
+      ];
+
+      let profileMap = {};
+
+      if (studentIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", studentIds);
+
+        if (profilesError) throw profilesError;
+
+        profileMap = Object.fromEntries(
+          (profiles || []).map((profile) => [
+            profile.id,
+            profile.full_name || "Student",
+          ])
+        );
+      }
+
+      const applicationMap = Object.fromEntries(
+        applicationList.map((application) => [application.id, application])
+      );
+
+      const makeRow = (application, payment = null) => {
+        const job = jobMap[application?.job_id || payment?.job_id] || {};
+        const amount = Number(payment?.amount ?? job.amount ?? 0);
+        const fee = Number(
+          payment?.platform_fee ??
+            Math.round(amount * FEE_RATE) / 100
+        );
+        const studentAmount = Number(
+          payment?.student_amount ?? amount - fee
+        );
+
+        return {
+          id: application?.id || payment?.application_id,
+          paymentId: payment?.id || null,
+          studentId: payment?.student_id || application?.student_id,
+          name:
+            profileMap[payment?.student_id || application?.student_id] ||
+            "Student",
+          job: job.title || "Job",
+          worked: formatDate(job.date),
+          hours: job.hours || "—",
+          amount,
+          fee,
+          studentAmount,
+          rating: application?.rating || 0,
+          review: application?.review || "",
+          tags: application?.review_tags || [],
+          paidOn: formatDate(payment?.paid_at),
+          ref: payment?.payment_reference || "—",
+        };
+      };
+
+      const pendingPayments = paymentList.filter(
+        (payment) => payment.status === "Pending"
+      );
+
+      const paidPayments = paymentList.filter(
+        (payment) => payment.status === "Paid"
+      );
+
+      const pendingApplicationIds = new Set(
+        pendingPayments.map((payment) => payment.application_id)
+      );
+
+      const verifiedApplicationIds = new Set(
+        paymentList.map((payment) => payment.application_id)
+      );
+
+      setAwaiting(
+        applicationList
+          .filter(
+            (application) =>
+              application.completed_at &&
+              !application.verified_at &&
+              !verifiedApplicationIds.has(application.id)
+          )
+          .map((application) => makeRow(application))
+      );
+
+      setDue(
+        pendingPayments.map((payment) =>
+          makeRow(
+            applicationMap[payment.application_id],
+            payment
+          )
+        )
+      );
+
+      setHistory(
+        paidPayments.map((payment) =>
+          makeRow(
+            applicationMap[payment.application_id],
+            payment
+          )
+        )
+      );
+    } catch (err) {
+      console.error("Transactions loading error:", err);
+      setPageError(err.message || "Could not load transactions.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
+
   function openModal(mode, row) {
     setModal({ mode, row });
-    setAnswer(""); setRating(0); setReview(""); setTags([]);
-    setReason(""); setComments(""); setEvidence(""); setError("");
+    setAnswer("");
+    setRating(row.rating || 0);
+    setReview(row.review || "");
+    setTags(row.tags || []);
+    setReason("");
+    setComments("");
+    setEvidence("");
+    setError("");
   }
-  const closeModal = () => setModal(null);
+
+  const closeModal = () => {
+    if (!saving) setModal(null);
+  };
 
   useEffect(() => {
     if (!modal) return;
-    const onKey = (e) => e.key === "Escape" && setModal(null);
+    const onKey = (e) => e.key === "Escape" && closeModal();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [modal]);
+  }, [modal, saving]);
 
-  const match = (r) => r.name.toLowerCase().includes(search.toLowerCase());
-  const shownAwaiting = useMemo(() => awaiting.filter(match), [awaiting, search]);
-  const shownDue = useMemo(() => due.filter(match), [due, search]);
-  const shownDisputes = useMemo(() => disputes.filter(match), [disputes, search]);
-  const shownHistory = useMemo(() => history.filter(match), [history, search]);
+  const shownAwaiting = useMemo(
+    () => awaiting.filter((r) => r.name.toLowerCase().includes(search.toLowerCase())),
+    [awaiting, search]
+  );
 
-  const dueTotal = due.reduce((s, r) => s + r.amount + feeOf(r.amount), 0);
-  const paidTotal = history.reduce((s, r) => s + r.amount + r.fee, 0);
+  const shownDue = useMemo(
+    () => due.filter((r) => r.name.toLowerCase().includes(search.toLowerCase())),
+    [due, search]
+  );
 
-  // ---- Prototype only: no real payment or backend. Replace with API calls later. ----
+  const shownDisputes = useMemo(
+    () => disputes.filter((r) => r.name.toLowerCase().includes(search.toLowerCase())),
+    [disputes, search]
+  );
 
-  // Record the payment and move the row into history.
-  function completePayment(row, rate, text, chosenTags) {
-    const fee = feeOf(row.amount);
-    setHistory((cur) => [
-      { id: Date.now(), name: row.name, job: row.job, paidOn: TODAY, ref: `NV-TXN-${String(100 + cur.length).padStart(4, "0")}`,
-        amount: row.amount, fee, rating: rate, review: text, tags: chosenTags },
-      ...cur,
-    ]);
-    setNotice(`Payment completed. ${row.name} has been notified of the ${rupees(row.amount)} payment and your review is added to their profile (prototype, no real payment made).`);
+  const shownHistory = useMemo(
+    () => history.filter((r) => r.name.toLowerCase().includes(search.toLowerCase())),
+    [history, search]
+  );
+
+  const dueTotal = due.reduce((sum, row) => sum + row.amount, 0);
+  const paidTotal = history.reduce((sum, row) => sum + row.amount, 0);
+
+  async function verifyGig() {
+    if (!rating) {
+      setError("Select a star rating to continue.");
+      return null;
+    }
+
+    setSaving(true);
+    setError("");
+
+    try {
+      const { data, error: rpcError } = await supabase.rpc(
+        "verify_gig_and_create_payment",
+        {
+          p_application_id: modal.row.id,
+          p_rating: rating,
+          p_review: review,
+          p_review_tags: tags,
+        }
+      );
+
+      if (rpcError) throw rpcError;
+
+      await loadTransactions();
+
+      return {
+        ...modal.row,
+        paymentId: data,
+        rating,
+        review,
+        tags,
+      };
+    } catch (err) {
+      console.error("Gig verification error:", err);
+      setError(err.message || "Could not verify this gig.");
+      return null;
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function confirmVerifyAndPay() {
-    if (!rating) return setError("Select a star rating to continue.");
-    const row = modal.row;
-    setAwaiting((cur) => cur.filter((r) => r.id !== row.id));
-    completePayment(row, rating, review, tags);
-    closeModal();
+  async function verifyPayLater() {
+    const verifiedRow = await verifyGig();
+    if (!verifiedRow) return;
+
+    setModal(null);
+    setNotice(
+      `${verifiedRow.name}'s gig is verified. A Pending payment record has been created.`
+    );
   }
 
-  function verifyPayLater() {
-    if (!rating) return setError("Select a star rating to continue.");
-    const row = modal.row;
-    setAwaiting((cur) => cur.filter((r) => r.id !== row.id));
-    setDue((cur) => [{ ...row, rating, review, tags }, ...cur]);
-    setNotice(`${row.name}'s job is verified. Payment is now due.`);
-    closeModal();
+  async function confirmVerifyAndPay() {
+    const verifiedRow = await verifyGig();
+    if (!verifiedRow) return;
+
+    setModal({
+      mode: "pay",
+      row: verifiedRow,
+    });
+    setNotice("Gig verified. Make the transfer before marking the payment as paid.");
   }
 
-  function confirmPayDue() {
+  async function confirmPayDue() {
     const row = modal.row;
-    setDue((cur) => cur.filter((r) => r.id !== row.id));
-    completePayment(row, row.rating, row.review, row.tags);
-    closeModal();
+
+    if (!row.paymentId) {
+      setError("Payment record not found. Refresh and try again.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+
+    try {
+      const { error: rpcError } = await supabase.rpc("mark_payment_paid", {
+        p_payment_id: row.paymentId,
+        p_payment_reference: null,
+      });
+
+      if (rpcError) throw rpcError;
+
+      setModal(null);
+      setNotice(
+        `Payment for ${row.name} has been marked as Paid in Nivra.`
+      );
+      await loadTransactions();
+    } catch (err) {
+      console.error("Payment update error:", err);
+      setError(err.message || "Could not update payment status.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function submitDispute() {
-    if (!reason) return setError("Tell us what happened to submit the dispute.");
-    const row = modal.row;
-    setAwaiting((cur) => cur.filter((r) => r.id !== row.id));
-    setDisputes((cur) => [{ ...row, reason, comments, evidence, raised: TODAY }, ...cur]);
-    setNotice(`Dispute submitted for ${row.name}. Payment is on hold while Nivra reviews it.`);
-    closeModal();
+    if (!reason) {
+      setError("Tell us what happened.");
+      return;
+    }
+
+    setError(
+      "Dispute reporting is not connected yet. No dispute has been submitted. Please contact Nivra support."
+    );
   }
 
-  const toggleTag = (t) => setTags((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]));
+  const toggleTag = (tag) =>
+    setTags((current) =>
+      current.includes(tag)
+        ? current.filter((item) => item !== tag)
+        : [...current, tag]
+    );
+
   const row = modal?.row;
 
   return (
@@ -179,6 +461,7 @@ export default function Transactions() {
         .tr-stat strong{display:block;color:var(--tr-accent);font-size:26px;line-height:1.2}
         .tr-stat span{color:var(--tr-muted);font-size:13px}
         .tr-notice{margin:0 0 20px;padding:12px 16px;border-radius:10px;background:#e7eddf;color:#3f5538;font-size:14px}
+        .tr-error{margin:0 0 20px;padding:12px 16px;border-radius:10px;background:#f8e4e2;color:#a33c3c;font-size:14px}
         .tr-toolbar{margin-bottom:24px}
         .tr-search{display:flex;align-items:center;gap:12px;max-width:620px;min-height:44px;padding:0 16px;border:1px solid var(--tr-border);border-radius:10px;background:#fff}
         .tr-search:focus-within{border-color:var(--tr-accent);box-shadow:0 0 0 3px #67464a15}
@@ -217,6 +500,7 @@ export default function Transactions() {
         .tr-btn.pay:hover{background:#513539}
         .tr-btn.danger{border-color:#d7a4a1;color:#a34545}
         .tr-btn:focus-visible{outline:2px solid var(--tr-accent);outline-offset:2px}
+        .tr-btn:disabled{opacity:.6;cursor:not-allowed}
         .tr-empty{padding:48px 20px!important;text-align:center}
         .tr-empty strong{display:block;font-size:17px}
         .tr-empty p{margin:8px 0 0;color:var(--tr-muted)}
@@ -244,7 +528,7 @@ export default function Transactions() {
         .tr-sum td{padding:9px 0;border-bottom:1px solid #eee5df}
         .tr-sum td:last-child{text-align:right;font-weight:650}
         .tr-sum tr.total td{border-bottom:0;font-weight:800;font-size:15px}
-        .tr-err{color:#a33c3c;font-size:13px;margin:12px 0 0}
+        .tr-err{color:#a33c3c!important;font-size:13px;margin:12px 0 0!important}
         .tr-modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px}
         @media(max-width:760px){
           .tr-page{padding:28px 16px 40px}
@@ -269,7 +553,9 @@ export default function Transactions() {
           <header className="tr-heading">
             <div>
               <h1>Transactions</h1>
-              <p className="tr-subtitle">Malabar Events · Verify completed gigs, then pay your students</p>
+              <p className="tr-subtitle">
+                Malabar Events · Verify completed gigs, then pay your students
+              </p>
             </div>
             <div className="tr-stats">
               <div className="tr-stat">
@@ -288,16 +574,21 @@ export default function Transactions() {
           </header>
 
           {notice && <p className="tr-notice" role="status">{notice}</p>}
+          {pageError && <p className="tr-error" role="alert">{pageError}</p>}
 
           <section className="tr-toolbar">
             <label className="tr-search">
               <span aria-hidden="true">⌕</span>
-              <input type="search" placeholder="Search by student name..." aria-label="Search transactions by student name"
-                value={search} onChange={(e) => setSearch(e.target.value)} />
+              <input
+                type="search"
+                placeholder="Search by student name..."
+                aria-label="Search transactions by student name"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </label>
           </section>
 
-          {/* 1. Student marked the job completed; employer verifies */}
           <section className="tr-card" aria-labelledby="tr-verify">
             <div className="tr-card-head">
               <h2 id="tr-verify">Awaiting verification</h2>
@@ -314,7 +605,7 @@ export default function Transactions() {
                 <tbody>
                   {shownAwaiting.map((r) => (
                     <tr key={r.id}>
-                      <td data-label="Student"><Candidate name={r.name} id={r.id} /></td>
+                      <td data-label="Student"><Candidate name={r.name} id={r.studentId} /></td>
                       <td data-label="Job">{r.job}</td>
                       <td data-label="Worked on">{r.worked}</td>
                       <td data-label="Hours">{r.hours}</td>
@@ -325,21 +616,21 @@ export default function Transactions() {
                       </td>
                     </tr>
                   ))}
-                  {shownAwaiting.length === 0 && (
-                    <tr>
-                      <td className="tr-empty" colSpan={7}>
-                        <strong>{awaiting.length === 0 ? "Nothing to verify" : "No students found"}</strong>
-                        <p>{awaiting.length === 0 ? "When a student marks a job as completed, it shows up here." : "Try a different name."}</p>
-                      </td>
-                    </tr>
+                  {!loading && shownAwaiting.length === 0 && (
+                    <tr><td className="tr-empty" colSpan={7}>
+                      <strong>{awaiting.length === 0 ? "Nothing to verify" : "No students found"}</strong>
+                      <p>{awaiting.length === 0 ? "When a student marks a job as completed, it shows up here." : "Try a different name."}</p>
+                    </td></tr>
                   )}
+                  {loading && <tr><td className="tr-empty" colSpan={7}>Loading transactions...</td></tr>}
                 </tbody>
               </table>
             </div>
-            <footer className="tr-foot"><span>{shownAwaiting.length} of {awaiting.length} awaiting verification</span></footer>
+            <footer className="tr-foot">
+              <span>{shownAwaiting.length} of {awaiting.length} awaiting verification</span>
+            </footer>
           </section>
 
-          {/* 2. Verified; payment still to be made */}
           <section className="tr-card" aria-labelledby="tr-due">
             <div className="tr-card-head">
               <h2 id="tr-due">Awaiting payment</h2>
@@ -349,44 +640,46 @@ export default function Transactions() {
               <table className="tr-table">
                 <thead>
                   <tr>
-                    <th>Student</th><th>Job</th><th>Worked on</th><th>Your rating</th><th>Amount</th><th>Status</th>
+                    <th>Student</th><th>Job</th><th>Worked on</th><th>Your rating</th><th>Student receives</th><th>Status</th>
                     <th className="tr-r">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {shownDue.map((r) => (
-                    <tr key={r.id}>
-                      <td data-label="Student"><Candidate name={r.name} id={r.id} /></td>
+                    <tr key={r.paymentId}>
+                      <td data-label="Student"><Candidate name={r.name} id={r.studentId} /></td>
                       <td data-label="Job">{r.job}</td>
                       <td data-label="Worked on">{r.worked}</td>
                       <td data-label="Your rating"><span className="tr-rating" aria-label={`${r.rating} out of 5`}>{stars(r.rating)}</span></td>
-                      <td data-label="Amount" className="tr-amount">{rupees(r.amount)}<small>{rupees(r.amount + feeOf(r.amount))} with fee</small></td>
+                      <td data-label="Student receives" className="tr-amount">
+                        {rupees(r.studentAmount)}
+                        <small>{rupees(r.amount)} employer payment</small>
+                      </td>
                       <td data-label="Status"><span className="tr-badge due">Payment due</span></td>
                       <td data-label="Action" className="tr-r">
-                        <button className="tr-btn pay" onClick={() => openModal("pay", r)}>Pay {rupees(r.amount)}</button>
+                        <button className="tr-btn pay" onClick={() => openModal("pay", r)}>Mark as paid</button>
                       </td>
                     </tr>
                   ))}
-                  {shownDue.length === 0 && (
-                    <tr>
-                      <td className="tr-empty" colSpan={7}>
-                        <strong>{due.length === 0 ? "No payments due" : "No students found"}</strong>
-                        <p>{due.length === 0 ? "Every verified job has been paid." : "Try a different name."}</p>
-                      </td>
-                    </tr>
+                  {!loading && shownDue.length === 0 && (
+                    <tr><td className="tr-empty" colSpan={7}>
+                      <strong>{due.length === 0 ? "No payments due" : "No students found"}</strong>
+                      <p>{due.length === 0 ? "Every verified job has been paid." : "Try a different name."}</p>
+                    </td></tr>
                   )}
                 </tbody>
               </table>
             </div>
-            <footer className="tr-foot"><span>{shownDue.length} of {due.length} awaiting payment</span></footer>
+            <footer className="tr-foot">
+              <span>{shownDue.length} of {due.length} awaiting payment</span>
+            </footer>
           </section>
 
-          {/* Disputes appear only when there is one */}
           {disputes.length > 0 && (
             <section className="tr-card" aria-labelledby="tr-disputes">
               <div className="tr-card-head">
                 <h2 id="tr-disputes">Under review</h2>
-                <span>Payment is on hold. The student can respond and Nivra will review.</span>
+                <span>Payment is on hold while Nivra reviews the report.</span>
               </div>
               <div className="tr-scroll">
                 <table className="tr-table">
@@ -396,7 +689,7 @@ export default function Transactions() {
                   <tbody>
                     {shownDisputes.map((r) => (
                       <tr key={r.id}>
-                        <td data-label="Student"><Candidate name={r.name} id={r.id} /></td>
+                        <td data-label="Student"><Candidate name={r.name} id={r.studentId} /></td>
                         <td data-label="Job">{r.job}</td>
                         <td data-label="Reported">{r.reason}</td>
                         <td data-label="Raised on">{r.raised}</td>
@@ -404,16 +697,12 @@ export default function Transactions() {
                         <td data-label="Status"><span className="tr-badge review">Under review</span></td>
                       </tr>
                     ))}
-                    {shownDisputes.length === 0 && (
-                      <tr><td className="tr-empty" colSpan={6}><strong>No students found</strong><p>Try a different name.</p></td></tr>
-                    )}
                   </tbody>
                 </table>
               </div>
             </section>
           )}
 
-          {/* 3. Paid */}
           <section className="tr-card" aria-labelledby="tr-history">
             <div className="tr-card-head">
               <h2 id="tr-history">Transaction history</h2>
@@ -429,26 +718,24 @@ export default function Transactions() {
                 </thead>
                 <tbody>
                   {shownHistory.map((r) => (
-                    <tr key={r.id}>
-                      <td data-label="Student"><Candidate name={r.name} id={r.id} /></td>
+                    <tr key={r.paymentId}>
+                      <td data-label="Student"><Candidate name={r.name} id={r.studentId} /></td>
                       <td data-label="Job">{r.job}</td>
                       <td data-label="Paid on">{r.paidOn}</td>
                       <td data-label="Your rating"><span className="tr-rating" aria-label={`${r.rating} out of 5`}>{stars(r.rating)}</span></td>
-                      <td data-label="Reference" className="tr-ref">{r.ref} (sample)</td>
+                      <td data-label="Reference" className="tr-ref">{r.ref}</td>
                       <td data-label="Status"><span className="tr-badge paid">Paid</span></td>
                       <td data-label="Total paid" className="tr-amount tr-r">
-                        {rupees(r.amount + r.fee)}
-                        <small>{rupees(r.amount)} to student + {rupees(r.fee)} fee</small>
+                        {rupees(r.amount)}
+                        <small>{rupees(r.studentAmount)} to student + {rupees(r.fee)} fee</small>
                       </td>
                     </tr>
                   ))}
-                  {shownHistory.length === 0 && (
-                    <tr>
-                      <td className="tr-empty" colSpan={7}>
-                        <strong>No transactions found</strong>
-                        <p>Try a different name.</p>
-                      </td>
-                    </tr>
+                  {!loading && shownHistory.length === 0 && (
+                    <tr><td className="tr-empty" colSpan={7}>
+                      <strong>No transactions found</strong>
+                      <p>Paid transactions will appear here.</p>
+                    </td></tr>
                   )}
                 </tbody>
               </table>
@@ -465,7 +752,6 @@ export default function Transactions() {
         <div className="tr-ov" onClick={(e) => e.target === e.currentTarget && closeModal()}>
           <div className="tr-modal" role="dialog" aria-modal="true" aria-labelledby="tr-modal-title">
 
-            {/* Pay a job that was verified earlier */}
             {modal.mode === "pay" && (
               <>
                 <h2 id="tr-modal-title">Confirm payment</h2>
@@ -475,16 +761,24 @@ export default function Transactions() {
                   <dt>Worked on</dt><dd>{row.worked}</dd>
                   <dt>Your rating</dt><dd className="tr-rating">{stars(row.rating)}</dd>
                 </dl>
-                <PaymentSummary amount={row.amount} />
-                <p style={{ marginTop: 12 }}>Prototype only: no money moves. This records the payment in your history.</p>
+                <PaymentSummary
+                  amount={row.amount}
+                  fee={row.fee}
+                  studentAmount={row.studentAmount}
+                />
+                <p style={{ marginTop: 12 }}>
+                  Transfer the amount using your chosen payment method first. This button only records the payment as Paid in Nivra; it does not transfer money.
+                </p>
+                {error && <p className="tr-err" role="alert">{error}</p>}
                 <div className="tr-modal-actions">
-                  <button className="tr-btn" onClick={closeModal}>Cancel</button>
-                  <button className="tr-btn pay" autoFocus onClick={confirmPayDue}>Confirm &amp; Proceed to Payment</button>
+                  <button className="tr-btn" disabled={saving} onClick={closeModal}>Cancel</button>
+                  <button className="tr-btn pay" disabled={saving} onClick={confirmPayDue}>
+                    {saving ? "Updating..." : "I've transferred the amount — mark as paid"}
+                  </button>
                 </div>
               </>
             )}
 
-            {/* Verify a job the student marked as completed */}
             {modal.mode === "verify" && (
               <>
                 <h2 id="tr-modal-title">Verify job completion</h2>
@@ -511,24 +805,40 @@ export default function Transactions() {
                   <>
                     <h3>How was your experience working with {row.name.split(" ")[0]}?</h3>
                     <StarPicker value={rating} onChange={(n) => { setRating(n); setError(""); }} />
-                    <p style={{ marginTop: 6 }}>Your rating does not change what the student is paid. If they did not turn up, report a problem instead.</p>
+                    <p style={{ marginTop: 6 }}>
+                      Your rating does not change what the student receives.
+                    </p>
                     <div className="tr-chips" role="group" aria-label="Review tags">
                       {TAGS.map((t) => (
                         <button key={t} type="button" className="tr-chip" aria-pressed={tags.includes(t)} onClick={() => toggleTag(t)}>{t}</button>
                       ))}
                     </div>
-                    <textarea aria-label="Review" placeholder="Share your experience working with this student..."
-                      value={review} onChange={(e) => setReview(e.target.value)} />
+                    <textarea
+                      aria-label="Review"
+                      placeholder="Share your experience working with this student..."
+                      value={review}
+                      onChange={(e) => setReview(e.target.value)}
+                    />
 
-                    <h3>Proceed to payment</h3>
-                    <PaymentSummary amount={row.amount} />
-                    <p style={{ marginTop: 12 }}>Prototype only: no money moves. The 10% fee is a sample figure.</p>
+                    <h3>Payment breakdown</h3>
+                    <PaymentSummary
+                      amount={row.amount}
+                      fee={Math.round(row.amount * FEE_RATE) / 100}
+                      studentAmount={row.amount - Math.round(row.amount * FEE_RATE) / 100}
+                    />
+                    <p style={{ marginTop: 12 }}>
+                      Verification creates a Pending payment record. You can record payment now after transferring the amount, or do it later.
+                    </p>
 
                     {error && <p className="tr-err" role="alert">{error}</p>}
                     <div className="tr-modal-actions">
-                      <button className="tr-btn" onClick={closeModal}>Cancel</button>
-                      <button className="tr-btn" onClick={verifyPayLater}>Verify, pay later</button>
-                      <button className="tr-btn pay" onClick={confirmVerifyAndPay}>Confirm &amp; Proceed to Payment</button>
+                      <button className="tr-btn" disabled={saving} onClick={closeModal}>Cancel</button>
+                      <button className="tr-btn" disabled={saving} onClick={verifyPayLater}>
+                        {saving ? "Saving..." : "Verify, pay later"}
+                      </button>
+                      <button className="tr-btn pay" disabled={saving} onClick={confirmVerifyAndPay}>
+                        {saving ? "Saving..." : "Verify & continue"}
+                      </button>
                     </div>
                   </>
                 )}
@@ -546,8 +856,9 @@ export default function Transactions() {
                     <textarea id="tr-comments" value={comments} onChange={(e) => setComments(e.target.value)} placeholder="Add anything that helps Nivra review this." />
                     <label htmlFor="tr-evidence" style={{ display: "block", fontSize: 14, fontWeight: 600, margin: "12px 0 6px" }}>Supporting evidence (optional)</label>
                     <input id="tr-evidence" type="file" onChange={(e) => setEvidence(e.target.files?.[0]?.name || "")} />
-                    <p style={{ marginTop: 12 }}>The student will be able to respond. Nivra reviews the dispute before deciding whether payment is due.</p>
-
+                    <p style={{ marginTop: 12 }}>
+                      Dispute submission is not connected yet. This form will not submit or store a report.
+                    </p>
                     {error && <p className="tr-err" role="alert">{error}</p>}
                     <div className="tr-modal-actions">
                       <button className="tr-btn" onClick={closeModal}>Cancel</button>

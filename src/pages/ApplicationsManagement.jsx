@@ -826,11 +826,11 @@ export default function ApplicationsManagement() {
                           </div>
                           <strong>
                             <Link
-                              className="am-candidate-name"
-                              href={`/candidate-profile?id=${applicant.student_id}`}
-                            >
-                              {applicant.name}
-                            </Link>
+  className="am-candidate-name"
+  href={`/candidate-profile?id=${applicant.student_id}&applicationId=${applicant.id}`}
+>
+  {applicant.name}
+</Link>
                           </strong>
                         </div>
                       </td>

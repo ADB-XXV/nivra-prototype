@@ -64,7 +64,6 @@ export default function StudentProfile() {
   const [availability, setAvailability] = useState("");
   const [location, setLocation] = useState("");
 
-  // Values being edited inside the pop-up window
   const [draft, setDraft] = useState({
     name: "",
     college: "",
@@ -139,7 +138,6 @@ export default function StudentProfile() {
     loadWorkHistory(user.id);
   }
 
-  // Completed gigs, with verification and payment kept as separate facts.
   async function loadWorkHistory(uid) {
     setHistoryLoading(true);
     setHistoryError("");
@@ -150,7 +148,7 @@ export default function StudentProfile() {
         "id, job_id, completed_at, verified_at, paid_at, rating, review, review_reported"
       )
       .eq("student_id", uid)
-      .eq("status", "Accepted")
+    .in("status", ["Accepted", "Completed"])
       .not("completed_at", "is", null)
       .order("completed_at", { ascending: false });
 
@@ -168,6 +166,28 @@ export default function StudentProfile() {
       setHistoryLoading(false);
       return;
     }
+
+    // Fetch actual payment amounts and statuses for these applications.
+    const { data: paymentRows, error: paymentError } = await supabase
+      .from("payments")
+      .select("application_id, student_amount, status, paid_at")
+      .eq("student_id", uid)
+      .in(
+        "application_id",
+        applications.map((application) => application.id)
+      );
+
+    if (paymentError) {
+      console.error("Could not load payment details:", paymentError);
+      setHistoryError("Could not load payment details.");
+    }
+
+    const paymentMap = Object.fromEntries(
+      (paymentRows || []).map((payment) => [
+        payment.application_id,
+        payment,
+      ])
+    );
 
     const jobIds = [...new Set(applications.map((a) => a.job_id))];
 
@@ -200,9 +220,15 @@ export default function StudentProfile() {
       else employers = data || [];
     }
 
-    const jobMap = Object.fromEntries(jobList.map((job) => [job.id, job]));
+    const jobMap = Object.fromEntries(
+      jobList.map((job) => [job.id, job])
+    );
+
     const employerMap = Object.fromEntries(
-      employers.map((e) => [e.id, e.business || e.full_name || "Employer"])
+      employers.map((e) => [
+        e.id,
+        e.business || e.full_name || "Employer",
+      ])
     );
 
     setGigs(
@@ -212,15 +238,27 @@ export default function StudentProfile() {
 
           if (!job) return null;
 
+          const payment = paymentMap[a.id];
+
           return {
             id: a.id,
             title: job.title || "Untitled job",
             employer: employerMap[job.employer_id] || "Employer",
             date: job.date,
-            amount: Number(job.amount) || 0,
+            amount:
+              payment?.student_amount != null
+                ? Number(payment.student_amount)
+                : Number(job.amount) || 0,
+            paymentStatus:
+              payment?.status || (a.paid_at ? "Paid" : null),
             completedAt: a.completed_at,
             verifiedAt: a.verified_at,
-            paidAt: a.paid_at,
+            paidAt:
+              payment?.status === "Paid"
+                ? payment.paid_at || a.paid_at
+                : !payment
+                  ? a.paid_at
+                  : null,
             rating: a.rating,
             review: a.review,
             reported: a.review_reported,
@@ -228,6 +266,7 @@ export default function StudentProfile() {
         })
         .filter(Boolean)
     );
+
     setHistoryLoading(false);
   }
 
@@ -245,6 +284,7 @@ export default function StudentProfile() {
       categories,
       availability,
     });
+
     setMessage("");
     setIsEditOpen(true);
   }
@@ -257,8 +297,11 @@ export default function StudentProfile() {
     setSaving(true);
     setMessage("");
 
-    // Keep the older "education" column filled for pages that still read it.
-    const combinedEducation = [draft.course, draft.yearOfStudy, draft.college]
+    const combinedEducation = [
+      draft.course,
+      draft.yearOfStudy,
+      draft.college,
+    ]
       .map((part) => part.trim())
       .filter(Boolean)
       .join(", ");
@@ -277,7 +320,7 @@ export default function StudentProfile() {
         experience: draft.experience,
         preferred_categories: draft.categories,
         availability: draft.availability,
-        city: draft.location
+        city: draft.location,
       })
       .eq("id", userId);
 
@@ -305,7 +348,6 @@ export default function StudentProfile() {
     setSaving(false);
   }
 
-  // Needs the report_review function from backend/gig_lifecycle.sql.
   async function reportReview(gig) {
     const { error } = await supabase.rpc("report_review", {
       p_application_id: String(gig.id),
@@ -319,19 +361,25 @@ export default function StudentProfile() {
     }
 
     setGigs((current) =>
-      current.map((g) => (g.id === gig.id ? { ...g, reported: true } : g))
+      current.map((g) =>
+        g.id === gig.id ? { ...g, reported: true } : g
+      )
     );
+
     setMessage("Thanks. Nivra will look at this review.");
   }
 
-  // Reputation numbers come only from gigs the employer verified.
   const verifiedGigs = gigs.filter((g) => g.verifiedAt);
   const reviews = verifiedGigs.filter((g) => g.rating);
+
   const averageRating = reviews.length
-    ? (reviews.reduce((sum, g) => sum + g.rating, 0) / reviews.length).toFixed(1)
+    ? (
+        reviews.reduce((sum, g) => sum + g.rating, 0) / reviews.length
+      ).toFixed(1)
     : null;
+
   const totalEarnings = gigs
-    .filter((g) => g.paidAt)
+    .filter((g) => g.paymentStatus === "Paid" || g.paidAt)
     .reduce((sum, g) => sum + g.amount, 0);
 
   if (loading) {
@@ -353,7 +401,11 @@ export default function StudentProfile() {
             <div className="profile-identity">
               <div className="profile-avatar">
                 {avatarUrl ? (
-                  <img className="sp-avatar-img" src={avatarUrl} alt={`${name || "Student"} profile`} />
+                  <img
+                    className="sp-avatar-img"
+                    src={avatarUrl}
+                    alt={`${name || "Student"} profile`}
+                  />
                 ) : (
                   name
                     .trim()
@@ -376,14 +428,19 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            {/* Reputation indicators */}
             <div className="sp-metrics" aria-label="Reputation">
               <div>
                 <b>{historyLoading ? "—" : verifiedGigs.length}</b>
                 <span>Verified gigs</span>
               </div>
               <div>
-                <b>{historyLoading ? "—" : averageRating ? `★ ${averageRating}/5` : "—"}</b>
+                <b>
+                  {historyLoading
+                    ? "—"
+                    : averageRating
+                      ? `★ ${averageRating}/5`
+                      : "—"}
+                </b>
                 <span>Average rating</span>
               </div>
               <div>
@@ -398,7 +455,9 @@ export default function StudentProfile() {
               {about.trim() ? (
                 <p>{about}</p>
               ) : (
-                <p className="sp-empty">Add a short description about yourself.</p>
+                <p className="sp-empty">
+                  Add a short description about yourself.
+                </p>
               )}
             </div>
 
@@ -430,19 +489,24 @@ export default function StudentProfile() {
               </div>
 
               <h3 className="info-heading">Availability</h3>
-
               <p>{availability}</p>
             </div>
 
-            {/* Work history: verified and paid are independent */}
             <div className="profile-card sp-card">
               <h3>Work history</h3>
 
-              {historyError && <p role="alert" className="sp-empty">{historyError}</p>}
-              {historyLoading && <p className="sp-empty">Loading work history...</p>}
+              {historyError && (
+                <p role="alert" className="sp-empty">{historyError}</p>
+              )}
+
+              {historyLoading && (
+                <p className="sp-empty">Loading work history...</p>
+              )}
 
               {!historyLoading && !historyError && gigs.length === 0 && (
-                <p className="sp-empty">Completed gigs will appear here.</p>
+                <p className="sp-empty">
+                  Completed gigs will appear here.
+                </p>
               )}
 
               {!historyLoading && gigs.length > 0 && (
@@ -452,7 +516,7 @@ export default function StudentProfile() {
                       <tr>
                         <th>Job</th>
                         <th>Employer</th>
-                        <th>Amount</th>
+                        <th>Amount received</th>
                         <th>Transaction status</th>
                       </tr>
                     </thead>
@@ -464,15 +528,39 @@ export default function StudentProfile() {
                           <td>{rupees(gig.amount)}</td>
                           <td>
                             {gig.verifiedAt ? (
-                              <span className="sp-badge verified">✓ Verified</span>
+                              <span className="sp-badge verified">
+                                ✓ Verified
+                              </span>
                             ) : (
-                              <span className="sp-badge">Awaiting verification</span>
+                              <span className="sp-badge">
+                                Awaiting verification
+                              </span>
                             )}
-                            {gig.paidAt ? (
-                              <span className="sp-badge paid">₹ Paid</span>
-                            ) : gig.verifiedAt ? (
-                              <span className="sp-badge pending">◷ Payment Pending</span>
+
+                            {gig.paymentStatus === "Paid" || gig.paidAt ? (
+                              <span className="sp-badge paid">
+                                ✓ Paid
+                              </span>
+                            ) : gig.paymentStatus === "Pending" ||
+                              gig.verifiedAt ? (
+                              <span className="sp-badge pending">
+                                ◷ Payment Pending
+                              </span>
                             ) : null}
+
+                            {gig.paidAt && (
+                              <div className="sp-meta">
+                                Paid on{" "}
+                                {new Date(gig.paidAt).toLocaleDateString(
+                                  "en-IN",
+                                  {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  }
+                                )}
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -482,11 +570,12 @@ export default function StudentProfile() {
               )}
             </div>
 
-            {/* Employer reviews: only from verified gigs */}
             <div className="profile-card sp-card">
               <h3>Employer reviews</h3>
 
-              {historyLoading && <p className="sp-empty">Loading reviews...</p>}
+              {historyLoading && (
+                <p className="sp-empty">Loading reviews...</p>
+              )}
 
               {!historyLoading && reviews.length === 0 && (
                 <p className="sp-empty">
@@ -500,14 +589,18 @@ export default function StudentProfile() {
                     <b className="sp-stars">★</b>{" "}
                     <b>{averageRating} / 5</b>{" "}
                     <span className="sp-meta">
-                      · Based on {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+                      · Based on {reviews.length}{" "}
+                      {reviews.length === 1 ? "review" : "reviews"}
                     </span>
                   </p>
 
                   {reviews.map((gig) => (
                     <div className="sp-review" key={gig.id}>
                       <b>{gig.employer}</b>
-                      <div className="sp-stars" aria-label={`${gig.rating} out of 5`}>
+                      <div
+                        className="sp-stars"
+                        aria-label={`${gig.rating} out of 5`}
+                      >
                         {stars(gig.rating)}
                       </div>
                       {gig.review && <p>“{gig.review}”</p>}
@@ -516,9 +609,15 @@ export default function StudentProfile() {
                       </div>
                       <div style={{ marginTop: 4 }}>
                         {gig.reported ? (
-                          <span className="sp-meta">Reported. Nivra is reviewing it.</span>
+                          <span className="sp-meta">
+                            Reported. Nivra is reviewing it.
+                          </span>
                         ) : (
-                          <button type="button" className="sp-link" onClick={() => reportReview(gig)}>
+                          <button
+                            type="button"
+                            className="sp-link"
+                            onClick={() => reportReview(gig)}
+                          >
                             Report this review
                           </button>
                         )}
@@ -544,10 +643,14 @@ export default function StudentProfile() {
             <div className="profile-card">
               <h3>Contact information</h3>
 
-              <p className="sp-meta" style={{ margin: "0 0 2px" }}>Email</p>
+              <p className="sp-meta" style={{ margin: "0 0 2px" }}>
+                Email
+              </p>
               <p>{email || "Not set"}</p>
 
-              <p className="sp-meta" style={{ margin: "0 0 2px" }}>Phone</p>
+              <p className="sp-meta" style={{ margin: "0 0 2px" }}>
+                Phone
+              </p>
               <p>{phone || "Not set"}</p>
             </div>
 
@@ -613,7 +716,9 @@ export default function StudentProfile() {
                     required
                     type="text"
                     value={draft.name}
-                    onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, name: e.target.value })
+                    }
                     placeholder="Your name"
                   />
                 </label>
@@ -623,7 +728,9 @@ export default function StudentProfile() {
                   <input
                     type="text"
                     value={draft.college}
-                    onChange={(e) => setDraft({ ...draft, college: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, college: e.target.value })
+                    }
                     placeholder="College name"
                   />
                 </label>
@@ -633,7 +740,9 @@ export default function StudentProfile() {
                   <input
                     type="text"
                     value={draft.course}
-                    onChange={(e) => setDraft({ ...draft, course: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, course: e.target.value })
+                    }
                     placeholder="e.g. B.Com"
                   />
                 </label>
@@ -643,7 +752,9 @@ export default function StudentProfile() {
                   <input
                     type="text"
                     value={draft.yearOfStudy}
-                    onChange={(e) => setDraft({ ...draft, yearOfStudy: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, yearOfStudy: e.target.value })
+                    }
                     placeholder="e.g. 2nd year"
                   />
                 </label>
@@ -653,7 +764,9 @@ export default function StudentProfile() {
                   <input
                     type="text"
                     value={draft.location}
-                    onChange={(e) => setDraft({ ...draft, location: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, location: e.target.value })
+                    }
                     placeholder="Your location"
                   />
                 </label>
@@ -663,7 +776,9 @@ export default function StudentProfile() {
                   <input
                     type="tel"
                     value={draft.phone}
-                    onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, phone: e.target.value })
+                    }
                     placeholder="Your phone number"
                   />
                 </label>
@@ -678,7 +793,9 @@ export default function StudentProfile() {
                   <textarea
                     rows={3}
                     value={draft.about}
-                    onChange={(e) => setDraft({ ...draft, about: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, about: e.target.value })
+                    }
                     placeholder="A short description about you and the work you are looking for"
                   />
                 </label>
@@ -688,7 +805,9 @@ export default function StudentProfile() {
                   <textarea
                     rows={3}
                     value={draft.skills}
-                    onChange={(e) => setDraft({ ...draft, skills: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, skills: e.target.value })
+                    }
                     placeholder="Enter your skills separated by commas"
                   />
                 </label>
@@ -698,7 +817,9 @@ export default function StudentProfile() {
                   <textarea
                     rows={4}
                     value={draft.experience}
-                    onChange={(e) => setDraft({ ...draft, experience: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, experience: e.target.value })
+                    }
                     placeholder="Enter your experience (one item per line)"
                   />
                 </label>
@@ -708,7 +829,9 @@ export default function StudentProfile() {
                   <textarea
                     rows={2}
                     value={draft.availability}
-                    onChange={(e) => setDraft({ ...draft, availability: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, availability: e.target.value })
+                    }
                     placeholder="When are you available?"
                   />
                 </label>
@@ -718,7 +841,9 @@ export default function StudentProfile() {
                   <textarea
                     rows={3}
                     value={draft.categories}
-                    onChange={(e) => setDraft({ ...draft, categories: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, categories: e.target.value })
+                    }
                     placeholder="Enter preferred categories separated by commas"
                   />
                 </label>
