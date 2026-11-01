@@ -133,7 +133,7 @@ export default function PremiumPricing({ publicNav = false }) {
           <ul>
             <li>Advanced candidate filters and matching insights</li>
             <li>Side-by-side candidate comparison</li>
-            <li>Bulk hiring support</li>
+            <li>Tailored ranking for job specifications</li>
           </ul>
         </section>
       </main>
