@@ -365,7 +365,7 @@ async function updateApplicationStatus(applicationId, status) {
 
         <button
           className="button button-small"
-          onClick={() => window.location.assign(`/candidate-profile?id=${applicant.student_id || applicant.id}`)}
+          onClick={() => window.location.assign(`/candidate-profile?id=${applicant.student_id}&applicationId=${applicant.id}`)}
         >
           View
         </button>

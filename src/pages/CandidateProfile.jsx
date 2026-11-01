@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -1002,7 +1001,7 @@ export default function CandidateProfile({ candidateId, applicationId }) {
                   </div>
 
                   <p className="cp-disclaimer">
-                    This comparison is indicative only. Review the candidate's
+                    This comparison is indicative only. Review the candidate&apos;s
                     complete profile before making a final decision.
                   </p>
                 </aside>

@@ -110,10 +110,12 @@ export default function SeePlans({ publicNav = false }) {
     <div className="nv nivra-plans">
       <style suppressHydrationWarning>{styles}</style>
       <nav className="top" aria-label="Main">
-        <div className="w" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <img src={logo.src} alt="" style={{ height: 40, width: "auto" }} />
-          <span style={{ color: "#593C42", fontWeight: 700, fontSize: "1.4em !important" }}>Nivra</span>
-        </div>
+        <a href="/" style={{ textDecoration: "none" }}>
+          <div className="w" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <img src={logo.src} alt="" style={{ height: 40, width: "auto" }} />
+            <span style={{ color: "#593C42", fontWeight: 700, fontSize: "1.4em !important" }}>Nivra</span>
+          </div>
+        </a>
       </nav>
       <main className="content">
         <h1>Simple plans for better hiring</h1>

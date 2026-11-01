@@ -144,10 +144,12 @@ const submit = async (e) => {
   return (
     <div className="nv">
       <nav className="top" aria-label="Main">
-        <div className="w" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <img src={logo.src} alt="" style={{ height: 40, width: "auto" }} />
-          <span style={{ color: "#593C42", fontWeight: 700, fontSize: "1.4em !important" }}>Nivra</span>
-        </div>
+        <a href="/" style={{ textDecoration: "none" }}>
+          <div className="w" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <img src={logo.src} alt="" style={{ height: 40, width: "auto" }} />
+            <span style={{ color: "#593C42", fontWeight: 700, fontSize: "1.4em !important" }}>Nivra</span>
+          </div>
+        </a>
       </nav>
 
       <main className="w" style={{ maxWidth: 460, padding: "36px 20px" }}>

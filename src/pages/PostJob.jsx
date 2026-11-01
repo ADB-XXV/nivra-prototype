@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import "../styles/EmployerDashboard.css";
 
 
@@ -17,7 +17,8 @@ export default function PostJob({ onSubmit, onCancel, employerName }) {
     amount: "",
     basis: "Per day",
   });
-  const [preview, setPreview] = useState(false);
+const [preview, setPreview] = useState(false);
+const isPublishing = useRef(false);
 
   function change(event) {
     const { name, value } = event.target;
@@ -26,6 +27,8 @@ export default function PostJob({ onSubmit, onCancel, employerName }) {
 
   
 async function publish() {
+  if (isPublishing.current) return;
+
   const workers = Number(form.workers);
   const amount = Number(form.amount);
 
@@ -41,6 +44,8 @@ async function publish() {
     return;
   }
 
+  isPublishing.current = true;
+
   try {
     await onSubmit?.({
       ...form,
@@ -55,8 +60,11 @@ async function publish() {
     setPreview(false);
   } catch (error) {
     console.error("Publishing failed:", error);
+  } finally {
+    isPublishing.current = false;
   }
 }
+
 
 
   function field(label, name, placeholder = "", type = "text") {
