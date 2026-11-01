@@ -287,7 +287,7 @@ export default function StudentDashboard() {
             expectedAmount:
               payment?.student_amount != null
                 ? Number(payment.student_amount)
-                : Math.round((Number(job.amount) || 0) * 0.967 * 100) / 100,
+                : Math.round((Number(job.amount) || 0) * 0.97 * 100) / 100,
             paymentStatus:
               payment?.status || (application.paid_at ? "Paid" : null),
             basis: job.basis || "shift",

@@ -5,7 +5,7 @@ import Link from "next/link";
 import EmployerNavbar from "../components/EmployerNavbar";
 import { supabase } from "../lib/supabase";
 
-const FEE_RATE = 3.3;
+const FEE_RATE = 3;
 const TAGS = ["Punctual", "Professional", "Hardworking", "Good communication", "Skilled"];
 
 const rupees = (n) =>

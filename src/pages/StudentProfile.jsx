@@ -248,7 +248,7 @@ export default function StudentProfile() {
             amount:
               payment?.student_amount != null
                 ? Number(payment.student_amount)
-                : Number(job.amount) || 0,
+               : Math.round((Number(job.amount) || 0) * 0.97 * 100) / 100,
             paymentStatus:
               payment?.status || (a.paid_at ? "Paid" : null),
             completedAt: a.completed_at,

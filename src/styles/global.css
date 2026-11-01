@@ -1,4 +1,11 @@
 /* ---- Student Navbar ---- */
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
 .nv-header {
   width: 100%;
   height: 56px;
