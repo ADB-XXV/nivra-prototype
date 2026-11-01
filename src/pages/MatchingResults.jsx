@@ -496,8 +496,8 @@ const isJobCompleted =
         )}
 
         <p className="mr-note">
-          Match scores are based on overlap between the job's required skills
-          and the skills listed in each applicant's profile. Availability,
+          Match scores are based on overlap between the job&apos;s required skills
+          and the skills listed in each applicant&apos;s profile. Availability,
           location and experience are displayed separately and should be
           verified before selecting a candidate.
         </p>
@@ -508,7 +508,7 @@ const isJobCompleted =
         {jobs.length === 0 && !loading ? (
           <section className="mr-list">
             <div className="mr-empty">
-              <h3>You haven't posted any jobs yet.</h3>
+              <h3>You haven&apos;t posted any jobs yet.</h3>
               <p className="mu">Post a job to start matching applicants.</p>
               <button
                 className="btn"

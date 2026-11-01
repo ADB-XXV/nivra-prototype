@@ -105,7 +105,7 @@ const styles = `
 .nivra-plans .features ul { margin: 0; padding-left: 21px; color: var(--muted); line-height: 1.7; }
 `;
 
-export default function SeePlans({ publicNav = false }) {
+export default function SeePlans() {
   return (
     <div className="nv nivra-plans">
       <style suppressHydrationWarning>{styles}</style>

@@ -123,7 +123,6 @@ export default function Transactions() {
   const [tags, setTags] = useState([]);
   const [reason, setReason] = useState("");
   const [comments, setComments] = useState("");
-  const [evidence, setEvidence] = useState("");
   const [error, setError] = useState("");
 
   const loadTransactions = useCallback(async () => {
@@ -250,10 +249,6 @@ export default function Transactions() {
 
       const paidPayments = paymentList.filter(
         (payment) => payment.status === "Paid"
-      );
-
-      const pendingApplicationIds = new Set(
-        pendingPayments.map((payment) => payment.application_id)
       );
 
       const verifiedApplicationIds = new Set(
