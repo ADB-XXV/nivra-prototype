@@ -7,11 +7,6 @@ import { supabase } from "../lib/supabase";
 
 const FEE_RATE = 3.3;
 const TAGS = ["Punctual", "Professional", "Hardworking", "Good communication", "Skilled"];
-const REASONS = [
-  "The student did not attend",
-  "The student left before finishing the job",
-  "Something else went wrong",
-];
 
 const rupees = (n) =>
   `₹${Number(n || 0).toLocaleString("en-IN", {
@@ -116,12 +111,9 @@ export default function Transactions() {
   const [saving, setSaving] = useState(false);
 
   const [modal, setModal] = useState(null);
-  const [answer, setAnswer] = useState("");
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [tags, setTags] = useState([]);
-  const [reason, setReason] = useState("");
-  const [comments, setComments] = useState("");
   const [error, setError] = useState("");
 
   const loadTransactions = useCallback(async () => {
@@ -296,12 +288,9 @@ export default function Transactions() {
 
   function openModal(mode, row) {
     setModal({ mode, row });
-    setAnswer("");
     setRating(row.rating || 0);
     setReview(row.review || "");
     setTags(row.tags || []);
-    setReason("");
-    setComments("");
     setError("");
   }
 
@@ -524,25 +513,12 @@ export default function Transactions() {
   }
 }
 
-  function submitDispute() {
-    if (!reason) {
-      setError("Tell us what happened.");
-      return;
-    }
-
-    setError(
-      "Dispute reporting is not connected yet. No dispute has been submitted. Please contact Nivra support."
-    );
-  }
-
   const toggleTag = (tag) =>
     setTags((current) =>
       current.includes(tag)
         ? current.filter((item) => item !== tag)
         : [...current, tag]
     );
-
-  const row = modal?.row;
 
   return (
     <div className="nv">
