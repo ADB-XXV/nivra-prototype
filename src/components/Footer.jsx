@@ -6,9 +6,8 @@ export default function Footer() {
     <footer className="foot">
       <div className="w">
         <p>
-          <b>Nivra</b> · Find work for a day. Build experience for tomorrow.
-        
-        Prototype with sample data. Employers, jobs and students are fictional.</p>
+          <b></b> 
+        </p>
       </div>
     </footer>
   );

@@ -1,26 +1,141 @@
-
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
-import { INITIAL_APPLICANTS } from "../data/applicants";
+import { supabase } from "../lib/supabase";
 
-export default function CandidateProfile({ candidateId }) {
-  const candidate =
-    INITIAL_APPLICANTS.find(
-      (applicant) => String(applicant.id) === String(candidateId)
-    ) ?? INITIAL_APPLICANTS[0];
-  const [status, setStatus] = useState(candidate.status);
+export default function CandidateProfile({ candidateId, applicationId }) {
+  const [candidate, setCandidate] = useState(null);
+  const [job, setJob] = useState(null);
+  const [application, setApplication] = useState(null);
+  const [status, setStatus] = useState("Applied");
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [notice, setNotice] = useState("");
+
   const terminalStatuses = ["Accepted", "Rejected"];
-  const skills = candidate.profileSkills;
-  const initials = candidate.name
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadCandidate() {
+      setLoading(true);
+      setNotice("");
+
+      if (!candidateId || !applicationId) {
+        if (active) {
+          setNotice("Applicant or application ID is missing.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: app, error: appError } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("id", applicationId)
+        .eq("student_id", candidateId)
+        .single();
+
+      if (!active) return;
+
+      if (appError) {
+        setNotice(`Could not load application: ${appError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      const [profileResult, jobResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", candidateId)
+          .single(),
+
+        supabase
+          .from("jobs")
+          .select("*")
+          .eq("id", app.job_id)
+          .single(),
+      ]);
+
+      if (!active) return;
+
+      if (profileResult.error) {
+        setNotice(
+          `Could not load candidate profile: ${profileResult.error.message}`
+        );
+        setLoading(false);
+        return;
+      }
+
+      if (jobResult.error) {
+        setNotice(`Could not load job details: ${jobResult.error.message}`);
+        setLoading(false);
+        return;
+      }
+
+      setApplication(app);
+      setCandidate(profileResult.data);
+      setJob(jobResult.data);
+      setStatus(app.status || "Applied");
+      setLoading(false);
+    }
+
+    loadCandidate();
+
+    return () => {
+      active = false;
+    };
+  }, [candidateId, applicationId]);
+
+  const skills = Array.isArray(candidate?.skills)
+    ? candidate.skills
+    : typeof candidate?.skills === "string"
+      ? candidate.skills
+          .split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean)
+      : [];
+
+  const initials = (candidate?.full_name || "Student")
     .split(" ")
     .map((part) => part[0])
     .slice(0, 2)
-    .join("");
+    .join("")
+    .toUpperCase();
 
   const statusClass = status.toLowerCase().replace(/\s+/g, "-");
+
+  const appliedDate = application?.applied_at
+    ? new Date(application.applied_at).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "Unknown";
+
+  const jobDate = job?.date
+    ? new Date(`${job.date}T12:00:00`).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "Not specified";
+
+  const jobSkills = Array.isArray(job?.skills)
+    ? job.skills
+    : typeof job?.skills === "string"
+      ? job.skills.split(",").map((skill) => skill.trim())
+      : [];
+
+  const matchedSkills = skills.filter((skill) =>
+    jobSkills.some(
+      (jobSkill) =>
+        jobSkill.toLowerCase() === skill.toLowerCase()
+    )
+  );
 
   const canUpdateStatus = (nextStatus) => {
     if (terminalStatuses.includes(status)) {
@@ -28,26 +143,57 @@ export default function CandidateProfile({ candidateId }) {
     }
 
     if (nextStatus === "Shortlisted") {
-      return status === "Under Review" || status === "Applied";
+      return ["Applied", "Under Review"].includes(status);
     }
 
     if (nextStatus === "Accepted") {
       return status === "Shortlisted";
     }
 
-    return nextStatus === "Rejected" &&
-      ["Applied", "Under Review", "Shortlisted"].includes(status);
+    return (
+      nextStatus === "Rejected" &&
+      ["Applied", "Under Review", "Shortlisted"].includes(status)
+    );
   };
 
-  const updateStatus = (nextStatus) => {
-    if (canUpdateStatus(nextStatus)) {
-      setStatus(nextStatus);
+  const updateStatus = async (nextStatus) => {
+    if (updating || !canUpdateStatus(nextStatus)) {
+      return;
     }
+
+    setUpdating(true);
+    setNotice("");
+
+    const { data, error } = await supabase
+      .from("applications")
+      .update({ status: nextStatus })
+      .eq("id", applicationId)
+      .select("id, status")
+      .single();
+
+    if (error) {
+      console.error("Could not update application status:", error);
+      setNotice(`Could not update status: ${error.message}`);
+    } else {
+      setStatus(data.status);
+
+      setApplication((current) => ({
+        ...current,
+        status: data.status,
+      }));
+
+      setNotice(
+        `Application ${nextStatus.toLowerCase()} successfully.`
+      );
+    }
+
+    setUpdating(false);
   };
 
   return (
     <div className="nv">
       <Navbar role="employer" active="/employer/applicants" />
+
       <style>{`
         .cp-page {
           --cp-ink: #302626;
@@ -329,6 +475,7 @@ export default function CandidateProfile({ candidateId }) {
           color: #5d4b46;
           font-size: 16px;
           line-height: 1.65;
+          overflow-wrap: anywhere;
         }
 
         .cp-job {
@@ -455,6 +602,24 @@ export default function CandidateProfile({ candidateId }) {
           color: #94857e;
           font-size: 13px;
           line-height: 1.7;
+        }
+
+        .cp-notice {
+          margin-bottom: 20px;
+          padding: 13px 16px;
+          border: 1px solid #e8dcd5;
+          border-radius: 9px;
+          background: white;
+          color: #67464a;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .cp-loading {
+          padding: 50px 20px;
+          text-align: center;
+          color: var(--cp-muted);
+          font-size: 16px;
         }
 
         @media (min-width: 1600px) {
@@ -590,170 +755,259 @@ export default function CandidateProfile({ candidateId }) {
             <span aria-hidden="true">←</span> All applicants
           </Link>
 
-          <header className="cp-header">
-            <div className="cp-identity">
-              <div className="cp-avatar">{initials}</div>
-
-              <div className="cp-heading-text">
-                <h1>{candidate.name}</h1>
-                <p>{candidate.college}</p>
-              </div>
+          {loading ? (
+            <div className="cp-loading">
+              Loading applicant details...
             </div>
-
-            <div className="cp-actions">
-              <span className={`cp-status ${statusClass}`}>
-                {status}
-              </span>
-
-              <button
-                className="cp-button"
-                disabled={!canUpdateStatus("Shortlisted")}
-                onClick={() => updateStatus("Shortlisted")}
-              >
-                Shortlist
-              </button>
-
-              <button
-                className="cp-button accept"
-                disabled={!canUpdateStatus("Accepted")}
-                onClick={() => updateStatus("Accepted")}
-              >
-                Accept
-              </button>
-
-              <button
-                className="cp-button reject"
-                disabled={!canUpdateStatus("Rejected")}
-                onClick={() => updateStatus("Rejected")}
-              >
-                Reject
-              </button>
+          ) : !candidate || !application || !job ? (
+            <div className="cp-notice">
+              {notice || "Applicant details could not be loaded."}
             </div>
-          </header>
+          ) : (
+            <>
+              {notice && (
+                <div className="cp-notice" role="status">
+                  {notice}
+                </div>
+              )}
 
-          <div className="cp-grid">
-            <section className="cp-card">
-              <div className="cp-card-heading">
-                <div>
-                  <span className="cp-label">
-                    APPLICATION DETAILS
-                  </span>
-                  <h2>Application message</h2>
+              <header className="cp-header">
+                <div className="cp-identity">
+                  <div className="cp-avatar">{initials}</div>
+
+                  <div className="cp-heading-text">
+                    <h1>{candidate.full_name || "Student"}</h1>
+                    <p>{candidate.college || "College not provided"}</p>
+                  </div>
                 </div>
 
-                <span className="cp-card-icon" aria-hidden="true">
-                  ✉
-                </span>
-              </div>
+                <div className="cp-actions">
+                  <span className={`cp-status ${statusClass}`}>
+                    {status}
+                  </span>
 
-              <blockquote className="cp-message">
-                “{candidate.message}”
-              </blockquote>
+                  <button
+                    className="cp-button"
+                    disabled={
+                      updating || !canUpdateStatus("Shortlisted")
+                    }
+                    onClick={() => updateStatus("Shortlisted")}
+                  >
+                    {updating ? "Updating..." : "Shortlist"}
+                  </button>
 
-              <div className="cp-detail">
-                <h3>Skills</h3>
-                <div className="cp-skills">
-                  {skills.map((skill) => (
-                    <span className="cp-skill" key={skill}>
-                      {skill}
+                  <button
+                    className="cp-button accept"
+                    disabled={
+                      updating || !canUpdateStatus("Accepted")
+                    }
+                    onClick={() => updateStatus("Accepted")}
+                  >
+                    Accept
+                  </button>
+
+                  <button
+                    className="cp-button reject"
+                    disabled={
+                      updating || !canUpdateStatus("Rejected")
+                    }
+                    onClick={() => updateStatus("Rejected")}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </header>
+
+              <div className="cp-grid">
+                <section className="cp-card">
+                  <div className="cp-card-heading">
+                    <div>
+                      <span className="cp-label">
+                        APPLICATION DETAILS
+                      </span>
+                      <h2>Candidate information</h2>
+                    </div>
+
+                    <span className="cp-card-icon" aria-hidden="true">
+                      ✉
                     </span>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              <div className="cp-detail">
-                <h3>Experience</h3>
-                <p className="cp-value">{candidate.experience}</p>
-              </div>
+                  <blockquote className="cp-message">
+                    Application submitted on {appliedDate}.
+                  </blockquote>
 
-              <div className="cp-detail">
-                <h3>Availability</h3>
-                <p className="cp-value">{candidate.availability}</p>
-              </div>
+                  <div className="cp-detail">
+                    <h3>Skills</h3>
+                    <div className="cp-skills">
+                      {skills.length > 0 ? (
+                        skills.map((skill, index) => (
+                          <span className="cp-skill" key={`${skill}-${index}`}>
+                            {skill}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="cp-value">Not provided</p>
+                      )}
+                    </div>
+                  </div>
 
-              <div className="cp-detail">
-                <h3>College</h3>
-                <p className="cp-value">
-                  {candidate.college}
-                </p>
-              </div>
-            </section>
+                  <div className="cp-detail">
+                    <h3>Experience</h3>
+                    <p className="cp-value">
+                      {candidate.experience || "Not provided"}
+                    </p>
+                  </div>
 
-            <aside className="cp-card">
-              <div className="cp-card-heading">
-                <div>
-                  <span className="cp-label">
-                    POSITION OVERVIEW
-                  </span>
-                  <h2>Job requirements</h2>
-                </div>
+                  <div className="cp-detail">
+                    <h3>Education</h3>
+                    <p className="cp-value">
+                      {candidate.education || "Not provided"}
+                    </p>
+                  </div>
 
-                <span className="cp-card-icon" aria-hidden="true">
-                  ▤
-                </span>
-              </div>
+                  <div className="cp-detail">
+                    <h3>College</h3>
+                    <p className="cp-value">
+                      {candidate.college || "Not provided"}
+                    </p>
+                  </div>
 
-              <div className="cp-job">
-                <h3>Event Assistant</h3>
+                  <div className="cp-detail">
+                    <h3>Availability</h3>
+                    <p className="cp-value">
+                      {candidate.availability || "Not provided"}
+                    </p>
+                  </div>
 
-                <div className="cp-job-meta">
-                  <p>
-                    <span className="cp-meta-icon">▦</span>
-                    24 Oct
+                  <div className="cp-detail">
+                    <h3>Location</h3>
+                    <p className="cp-value">
+                      {candidate.city || "Not provided"}
+                    </p>
+                  </div>
+
+                  <div className="cp-detail">
+                    <h3>Phone</h3>
+                    <p className="cp-value">
+                      {candidate.phone || "Not provided"}
+                    </p>
+                  </div>
+
+                  <div className="cp-detail">
+                    <h3>Preferred job categories</h3>
+                    <p className="cp-value">
+                      {candidate.preferred_categories || "Not provided"}
+                    </p>
+                  </div>
+                </section>
+
+                <aside className="cp-card">
+                  <div className="cp-card-heading">
+                    <div>
+                      <span className="cp-label">
+                        POSITION OVERVIEW
+                      </span>
+                      <h2>Job details</h2>
+                    </div>
+
+                    <span className="cp-card-icon" aria-hidden="true">
+                      ▤
+                    </span>
+                  </div>
+
+                  <div className="cp-job">
+                    <h3>{job.title || "Job"}</h3>
+
+                    <div className="cp-job-meta">
+                      <p>
+                        <span className="cp-meta-icon">▦</span>
+                        {jobDate}
+                      </p>
+
+                      <p>
+                        <span className="cp-meta-icon">◷</span>
+                        {job.hours || "Timing not specified"}
+                      </p>
+
+                      <p>
+                        <span className="cp-meta-icon">⌖</span>
+                        {job.location || "Location not specified"}
+                      </p>
+
+                      <p>
+                        <span className="cp-meta-icon">₹</span>
+                        {job.amount != null
+                          ? `₹${job.amount} ${job.basis ? `/ ${job.basis}` : ""}`
+                          : "Payment not specified"}
+                      </p>
+
+                      <p>
+                        <span className="cp-meta-icon">◈</span>
+                        {job.category || "Category not specified"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="cp-match">
+                    <h3>Candidate and job comparison</h3>
+
+                    <ul className="cp-match-list">
+                      <li>
+                        <span className="cp-check">✓</span>
+                        <span>
+                          {matchedSkills.length} matching skills found
+                        </span>
+                      </li>
+
+                      <li>
+                        <span className="cp-check">✓</span>
+                        <span>
+                          Candidate availability:{" "}
+                          {candidate.availability || "Not provided"}
+                        </span>
+                      </li>
+
+                      <li>
+                        <span className="cp-check">✓</span>
+                        <span>
+                          Candidate location:{" "}
+                          {candidate.city || "Not provided"}
+                        </span>
+                      </li>
+
+                      <li>
+                        <span className="cp-check">✓</span>
+                        <span>
+                          Education:{" "}
+                          {candidate.education || "Not provided"}
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="cp-match-summary">
+                    <span className="cp-score">
+                      {matchedSkills.length}/{skills.length}
+                    </span>
+
+                    <div>
+                      <strong>Skills comparison</strong>
+                      <p>
+                        Based on the skills listed in the candidate and job
+                        profiles
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="cp-disclaimer">
+                    This comparison is indicative only. Review the candidate&apos;s
+                    complete profile before making a final decision.
                   </p>
-
-                  <p>
-                    <span className="cp-meta-icon">◷</span>
-                    9 am – 5 pm
-                  </p>
-
-                  <p>
-                    <span className="cp-meta-icon">⌖</span>
-                    Kozhikode
-                  </p>
-                </div>
+                </aside>
               </div>
-
-              <div className="cp-match">
-                <h3>Why this candidate may match</h3>
-
-                <ul className="cp-match-list">
-                  <li>
-                    <span className="cp-check">✓</span>
-                    <span>4 of 5 required skills</span>
-                  </li>
-
-                  <li>
-                    <span className="cp-check">✓</span>
-                    <span>Free 9 am – 5 pm on 24 Oct</span>
-                  </li>
-
-                  <li>
-                    <span className="cp-check">✓</span>
-                    <span>Kozhikode, about 3 km away</span>
-                  </li>
-
-                  <li>
-                    <span className="cp-check">✓</span>
-                    <span>2 similar events</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="cp-match-summary">
-                <span className="cp-score">4/5</span>
-                <div>
-                  <strong>Good potential match</strong>
-                  <p>Based on available profile information</p>
-                </div>
-              </div>
-
-              <p className="cp-disclaimer">
-                Indicative only. Check the candidate’s profile
-                before making a final decision.
-              </p>
-            </aside>
-          </div>
+            </>
+          )}
         </div>
       </main>
     </div>

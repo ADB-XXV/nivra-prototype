@@ -1,3 +1,5 @@
+"use client";
+
 // src/app/components/Navbar.jsx
 // One navbar for every page. `role` picks which links to show, so students
 // never see employer links and the other way round.
@@ -9,12 +11,11 @@
 // Must be rendered inside <div className="nv"> (see globals.css).
 
 import Link from "next/link";
+import Image from "next/image";
+import logo from "../images/logo.png";
 
 const LINKS = {
-  public: [
-    { label: "Find jobs", path: "/browsejobs" },
-    { label: "For employers", path: "/login?role=employer&mode=signup" },
-  ],
+  public: [],
   student: [
     { label: "Browse jobs", path: "/browsejobs" },
     { label: "Saved", path: "/saved" },
@@ -53,8 +54,10 @@ export default function Navbar({
           className="logo"
           href="/"
           onClick={(event) => handleNavigation(event, "/")}
+          style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
         >
-          Nivra<i />
+          <Image src={logo} alt="Nivra" className="navbar-logo-image" />
+          <span style={{ color: "#593C42", fontWeight: 700,fontSize: "1.4em !important" }}>Nivra</span>
         </Link>
 
         <div className="links">

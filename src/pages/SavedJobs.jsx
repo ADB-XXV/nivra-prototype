@@ -1,21 +1,9 @@
+
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import StudentNavbar from "../components/StudentNavbar";
-
-const INITIAL_JOBS = [
-  { id: 1, title: "Event Assistant", company: "Malabar Events", city: "Kozhikode", schedule: "Sat, 24 Oct · 9:00 am – 5:00 pm · One day", pay: 800 },
-  { id: 2, title: "Retail Promoter", company: "Urban Cart Stores", city: "Thrissur", schedule: "Fri, 23 – Sun, 25 Oct · 10:00 am – 6:00 pm · Short term", pay: 900 },
-  { id: 3, title: "Delivery Partner", company: "QuickBasket", city: "Bengaluru", schedule: "Sat, 31 Oct · 10:00 am – 6:00 pm · One day", pay: 850 },
-];
-
-const NAV = [
-  ["Browse jobs", "/jobs"],
-  ["Saved", "/saved"],
-  ["My applications", "/applications"],
-  ["Dashboard", "/student/dashboard"],
-  ["Profile", "/student/profile"],
-];
+import { supabase } from "../lib/supabase";
 
 const CSS = `
 .nv-root {
@@ -39,30 +27,6 @@ const CSS = `
 }
 .nv-root *, .nv-root *::before, .nv-root *::after { box-sizing: inherit; }
 .nv-root button { font-family: inherit; cursor: pointer; }
-
-.nv-header { background: var(--surface); border-bottom: 1px solid var(--line); }
-.nv-header-inner {
-  max-width: 1160px; margin: 0 auto; padding: 12px 24px;
-  display: flex; align-items: center; gap: 8px;
-}
-.nv-logo { font-size: 20px; font-weight: 700; margin-right: 18px;  }
-.nv-logo-dot {
-  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--rose); margin-left: 2px;
-}
-.nv-nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
-.nv-nav a {
-  padding: 8px 10px; border-radius: 6px; color: var(--muted);
-  text-decoration: none; font-size: 16px;
-}
-.nv-nav a:hover { color: var(--ink); }
-.nv-nav a.active { background: var(--rose-soft); color: var(--ink); }
-.nv-right { display: flex; align-items: center; gap: 30px; }
-.nv-role {
-  background: #e7efe0; color: #3f5a35; font-weight: 700; font-size: 12.5px;
-  padding: 5px 11px; border-radius: 6px;
-}
-.nv-logout { color: var(--muted); text-decoration: none; font-size: 15px; }
 
 .nv-main { flex: 1; width: 100%; max-width: 1160px; margin: 0 auto; padding: 28px 24px 40px; }
 .nv-title { font-size: 24px; font-weight: 700; margin: 0 0 14px; }
@@ -98,11 +62,10 @@ const CSS = `
 .nv-btn:hover { background: #faf6f3; }
 .nv-btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; padding: 8px 14px; }
 .nv-btn.primary:hover { background: #4a2d34; }
-.nv-btn.primary[disabled] { opacity: 0.6; cursor: default; }
-.nv-btn:focus-visible, .nv-remove:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.nv-btn[disabled] { opacity: 0.6; cursor: default; }
 
 .nv-empty { padding: 36px 0; text-align: center; color: var(--muted); }
-
+.nv-message { margin: 0 0 14px; color: var(--muted); }
 
 .nv-footer p {
   max-width: 1160px; margin: 0 auto; padding: 28px 24px 60px;
@@ -113,17 +76,208 @@ const CSS = `
 @media (max-width: 820px) {
   .nv-row { flex-direction: column; align-items: flex-start; }
   .nv-side { flex-wrap: wrap; }
-  .nv-right { gap: 14px; }
-  .nv-header-inner { flex-wrap: wrap; }
 }
 `;
 
-export default function SavedJobs({ onNavigate = (path) => window.location.assign(path) }) {
-  const [jobs, setJobs] = useState(INITIAL_JOBS);
+export default function SavedJobs({
+  onNavigate = (path) => window.location.assign(path),
+}) {
+  const [jobs, setJobs] = useState([]);
   const [applied, setApplied] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [studentId, setStudentId] = useState(null);
+  const [message, setMessage] = useState("");
+  const [removing, setRemoving] = useState(null);
+  const [applying, setApplying] = useState(null);
 
-  const remove = (id) => setJobs((list) => list.filter((j) => j.id !== id));
-  const apply = (id) => setApplied((list) => (list.includes(id) ? list : [...list, id]));
+  useEffect(() => {
+    loadSavedJobs();
+  }, []);
+
+  async function loadSavedJobs() {
+    setLoading(true);
+    setMessage("");
+
+    const { data: { user }, error: authError } =
+      await supabase.auth.getUser();
+
+    if (authError || !user) {
+      setMessage("Please log in to view your saved jobs.");
+      setLoading(false);
+      return;
+    }
+
+    setStudentId(user.id);
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || profile.role !== "student") {
+      setMessage("This page is only available to student accounts.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: saved, error: savedError } = await supabase
+      .from("saved_jobs")
+      .select("job_id")
+      .eq("student_id", user.id);
+
+    if (savedError) {
+      setMessage("Could not load saved jobs: " + savedError.message);
+      setLoading(false);
+      return;
+    }
+
+    const jobIds = saved.map((item) => item.job_id);
+
+    if (jobIds.length === 0) {
+      setJobs([]);
+      setApplied([]);
+      setLoading(false);
+      return;
+    }
+
+    const { data: jobData, error: jobsError } = await supabase
+      .from("jobs")
+      .select("*")
+      .in("id", jobIds);
+
+    if (jobsError) {
+      setMessage("Could not load job details: " + jobsError.message);
+      setLoading(false);
+      return;
+    }
+
+    const employerIds = [
+      ...new Set(jobData.map((job) => job.employer_id))
+    ];
+
+    const { data: employers, error: employersError } = await supabase
+      .from("profiles")
+      .select("id, business")
+      .in("id", employerIds);
+
+    if (employersError) {
+      setMessage("Could not load employer details: " + employersError.message);
+      setLoading(false);
+      return;
+    }
+
+    const employerMap = {};
+    employers.forEach((employer) => {
+      employerMap[employer.id] = employer.business;
+    });
+
+    const formattedJobs = jobData.map((job) => ({
+      ...job,
+      company: employerMap[job.employer_id] || "Employer",
+    }));
+
+    setJobs(formattedJobs);
+
+    const { data: applications, error: applicationsError } =
+      await supabase
+        .from("applications")
+        .select("job_id")
+        .eq("student_id", user.id);
+
+    if (applicationsError) {
+      setMessage("Could not load application status: " + applicationsError.message);
+      setLoading(false);
+      return;
+    }
+
+    setApplied(applications.map((item) => item.job_id));
+    setLoading(false);
+  }
+
+  async function remove(jobId) {
+    if (!studentId) return;
+
+    setRemoving(jobId);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("saved_jobs")
+      .delete()
+      .eq("student_id", studentId)
+      .eq("job_id", jobId);
+
+    if (error) {
+      setMessage("Could not remove saved job: " + error.message);
+      setRemoving(null);
+      return;
+    }
+
+    setJobs((current) => current.filter((job) => job.id !== jobId));
+    setRemoving(null);
+  }
+
+  async function apply(jobId) {
+    if (!studentId) return;
+
+    setApplying(jobId);
+    setMessage("");
+
+    if (applied.includes(jobId)) {
+      setMessage("You have already applied for this job.");
+      setApplying(null);
+      return;
+    }
+
+    const { error } = await supabase
+      .from("applications")
+      .insert({
+        job_id: jobId,
+        student_id: studentId,
+        status: "Applied",
+      });
+
+    if (error) {
+      if (error.code === "23505") {
+        setApplied((current) => [...current, jobId]);
+        setMessage("You have already applied for this job.");
+      } else {
+        setMessage("Could not apply: " + error.message);
+      }
+
+      setApplying(null);
+      return;
+    }
+
+    setApplied((current) => [...current, jobId]);
+    setMessage("Application submitted successfully!");
+    setApplying(null);
+  }
+
+  function formatDate(date) {
+    if (!date) return "";
+
+    return new Date(date + "T00:00:00").toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  }
+
+  function getSchedule(job) {
+    const date = formatDate(job.date);
+    const hours = job.hours || "";
+    return [date, hours, job.basis].filter(Boolean).join(" · ");
+  }
+
+  if (loading) {
+    return (
+      <div className="nv-root">
+        <StudentNavbar active="/saved" />
+        <main className="nv-main">Loading saved jobs...</main>
+      </div>
+    );
+  }
 
   return (
     <div className="nv-root">
@@ -134,38 +288,65 @@ export default function SavedJobs({ onNavigate = (path) => window.location.assig
       <main className="nv-main">
         <h1 className="nv-title">Saved jobs</h1>
 
+        {message && (
+          <p className="nv-message" role="status">
+            {message}
+          </p>
+        )}
+
         <section className="nv-card">
           {jobs.length === 0 && (
-            <div className="nv-empty">No saved jobs yet. Save a job from Browse jobs to see it here.</div>
+            <div className="nv-empty">
+              No saved jobs yet. Save a job from Browse jobs to see it here.
+            </div>
           )}
-          {jobs.map((j) => (
-            <article className="nv-row" key={j.id}>
+
+          {jobs.map((job) => (
+            <article className="nv-row" key={job.id}>
               <div className="nv-info">
-                <h2 className="nv-job-title">{j.title}</h2>
+                <h2 className="nv-job-title">{job.title}</h2>
                 <p className="nv-job-sub">
-                  {j.company} · {j.city}
+                  {job.company} · {job.location}
                 </p>
-                <p className="nv-job-meta">{j.schedule}</p>
+                <p className="nv-job-meta">{getSchedule(job)}</p>
               </div>
 
               <div className="nv-side">
                 <span className="nv-pay">
-                  ₹{j.pay}
-                  <small>/day</small>
+                  ₹{job.amount}
+                  <small>/{job.basis || "job"}</small>
                 </span>
-                <button type="button" className="nv-remove" onClick={() => remove(j.id)}>
-                  Remove
+
+                <button
+                  type="button"
+                  className="nv-remove"
+                  disabled={removing === job.id}
+                  onClick={() => remove(job.id)}
+                >
+                  {removing === job.id ? "Removing..." : "Remove"}
                 </button>
-                <button type="button" className="nv-btn">
+
+                <button
+                  type="button"
+                  className="nv-btn"
+                  onClick={() =>
+                    onNavigate(`/jobdetails/${job.id}?returnTo=saved`)
+                  }
+                >
                   View job
                 </button>
+
                 <button
                   type="button"
                   className="nv-btn primary"
-                  disabled={applied.includes(j.id)}
-                  onClick={() => apply(j.id)}
+                  disabled={applied.includes(job.id) || applying === job.id}
+                  onClick={() => apply(job.id)}
                 >
-                  {applied.includes(j.id) ? "Applied" : "Apply"}
+                  {applying === job.id
+                    ? "Applying..."
+                    : applied.includes(job.id)
+                    ? "Applied"
+                    : "Apply"}
                 </button>
               </div>
             </article>
@@ -173,9 +354,10 @@ export default function SavedJobs({ onNavigate = (path) => window.location.assig
         </section>
       </main>
 
+
       <footer className="nv-footer">
         <p>
-          <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow. 
+          <strong>Nivra</strong> · Find work for a day. Build experience for tomorrow.
         </p>
       </footer>
     </div>

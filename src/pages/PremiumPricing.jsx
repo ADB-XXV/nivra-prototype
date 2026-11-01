@@ -1,5 +1,6 @@
 import React from "react";
 import EmployerNavbar from "../components/EmployerNavbar";
+import Navbar from "../components/Navbar";
 
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -105,11 +106,11 @@ const styles = `
 .nivra-plans .features ul { margin: 0; padding-left: 21px; color: var(--muted); line-height: 1.7; }
 `;
 
-export default function PremiumPricing() {
+export default function PremiumPricing({ publicNav = false }) {
   return (
     <div className="nivra-plans">
-      <style>{styles}</style>
-      <EmployerNavbar active="/pricing" />
+      <style suppressHydrationWarning>{styles}</style>
+      {publicNav ? <Navbar role="public" /> : <EmployerNavbar active="/pricing" />}
       <main className="content">
         <h1>Simple plans for better hiring</h1>
         <p className="subtitle">Choose the tools that fit your hiring needs. You can change plans at any time.</p>
@@ -122,7 +123,7 @@ export default function PremiumPricing() {
           </article>
           <article className="plan-card premium">
             <div className="plan-name">Premium</div>
-            <div className="price">₹699 <small>/ month</small></div>
+            <div className="price">₹199 <small>/ month</small></div>
             <div className="plan-desc">For teams hiring more often</div>
             <a className="upgrade" href="/login?role=employer&mode=signup">Choose Premium</a>
           </article>

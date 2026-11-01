@@ -1,39 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "../lib/supabase";
+import logo from "../images/logo.png";
 
 // Self-contained: no other files needed. Styles are scoped under .nv so they
 // won't clash with the rest of your app.
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
-
-const css = `
-.nv{--bg:#FAF5F0;--sf:#fff;--ln:#e7ddd3;--tx:#2d2124;--mu:#7b6b6e;--sd:#56694b;--tl:#f4e3e1;--btn:#593C42;--btx:#fff;--ter:#D6A5A5;--sec:#A8B89A;--er:#a23b3b;
-  background:var(--bg);color:var(--tx);min-height:100vh;font:15px/1.5 'DM Sans',system-ui,sans-serif}
-@media(prefers-color-scheme:dark){.nv{--bg:#1d1517;--sf:#2a2023;--ln:#43353a;--tx:#f3ebe6;--mu:#b5a5a8;--sd:#b9c9ab;--tl:#3b2a2e;--btn:#D6A5A5;--btx:#2d2124;--er:#e58b8b}}
-.nv *{box-sizing:border-box}
-.nv h2{margin:0 0 .5rem;line-height:1.2;font-size:1.35rem}.nv p{margin:0 0 .75rem}
-.nv .w{max-width:1080px;margin:0 auto;padding:0 20px}.nv .mu{color:var(--mu)}
-.nv .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.nv .top{background:var(--sf);border-bottom:1px solid var(--ln);position:sticky;top:0;z-index:5}
-.nv .top .w{display:flex;align-items:center;gap:20px;height:56px}
-.nv .logo{font-weight:700;font-size:1.25rem;color:var(--btn);background:none;border:0;font-family:inherit;padding:0;cursor:pointer;letter-spacing:-.02em}
-.nv .logo i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ter);margin-left:2px}
-.nv .links{display:flex;gap:2px;flex:1;overflow-x:auto}
-.nv .links a{padding:6px 10px;border-radius:6px;color:var(--mu);font-weight:500;cursor:pointer;white-space:nowrap}
-.nv .btn{background:var(--btn);color:var(--btx);border:1px solid var(--btn);padding:9px 16px;border-radius:6px;font:inherit;font-weight:500;cursor:pointer;display:inline-block}
-.nv .btn.s{background:transparent;color:var(--tx);border-color:var(--ln)}.nv .btn.g{background:none;border-color:transparent;color:var(--sd);padding:6px 8px}.nv .btn.sm{padding:5px 10px;font-size:.85rem}
-.nv .btn:focus-visible,.nv input:focus-visible{outline:2px solid var(--sec);outline-offset:2px}
-.nv input{width:100%;padding:9px 11px;border:1px solid var(--ln);border-radius:6px;background:var(--sf);color:var(--tx);font:inherit}
-.nv input.bad{border-color:var(--er)}
-.nv label{display:block;font-weight:500;font-size:.88rem;margin:12px 0 4px}
-.nv .err{color:var(--er);display:block;margin-top:3px;font-size:.85rem}.nv .hint{color:var(--mu);font-size:.85rem}
-.nv .box{background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:20px}
-.nv .ch{display:inline-block;padding:3px 10px;border:1px solid var(--ln);border-radius:5px;margin:0 6px 6px 0;font:inherit;font-size:.85rem;background:var(--sf);color:var(--tx);cursor:pointer}
-.nv .ch.on{background:var(--tl);border-color:var(--ter)}
-.nv .foot{border-top:1px solid var(--ln);padding:22px 0;font-size:.85rem;color:var(--mu);margin-top:40px}
-@media(max-width:760px){.nv .top .w{gap:10px}}
-`;
 
 // Fields change with mode (login / signup) and role (student / employer).
 function fieldsFor(mode, role) {
@@ -77,6 +51,8 @@ export default function Login({
   const [values, setValues] = useState({});
   const [errors, setErrors] = useState({});
   const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const fields = fieldsFor(mode, role);
   const isLogin = mode === "login";
@@ -86,30 +62,94 @@ export default function Login({
     if (errors[name]) setErrors((e) => ({ ...e, [name]: undefined }));
   };
 
-  const submit = (e) => {
-    e.preventDefault();
-    const found = validate(fields, values);
-    setErrors(found);
-    if (Object.keys(found).length) return;
-    // Prototype only: no backend yet. Replace with a real auth call later.
-    onNavigate(role === "employer" ? "/employer/dashboard" : "/applications");
-  };
+  
+const submit = async (e) => {
+  e.preventDefault();
+
+  const found = validate(fields, values);
+  setErrors(found);
+  setMessage("");
+
+  if (Object.keys(found).length) return;
+
+  setLoading(true);
+
+  try {
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email.trim(),
+        password: values.password,
+        options: {
+          data: {
+            role,
+            fullName: values.fullName || null,
+            college: values.college || null,
+            business: values.business || null,
+            city: values.city || null,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.session) {
+        onNavigate(
+          role === "employer"
+            ? "/employer/dashboard"
+            : "/student/dashboard"
+        );
+      } else {
+        setMessage(
+          "Account created! Check your email to confirm your account before logging in."
+        );
+      }
+    } else {
+      const { data, error } =
+        await supabase.auth.signInWithPassword({
+          email: values.email.trim(),
+          password: values.password,
+        });
+
+      if (error) throw error;
+
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+
+      if (profileError) {
+        await supabase.auth.signOut();
+        throw new Error("Could not load your profile. Please try again.");
+      }
+
+      onNavigate(
+        profile.role === "employer"
+          ? "/employer/dashboard"
+          : "/student/dashboard"
+      );
+    }
+  } catch (error) {
+    setMessage(error.message || "Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const switchMode = (m) => { setMode(m); setErrors({}); };
   const switchRole = (r) => { setRole(r); setErrors({}); };
 
   return (
     <div className="nv">
-      <style>{css}</style>
-
       <nav className="top" aria-label="Main">
-        <div className="w">
-          <button className="logo" onClick={() => onNavigate("/")}>Nivra<i /></button>
-          <div className="links">
-            <a onClick={() => onNavigate("/jobs")}>Find jobs</a>
-            <a onClick={() => { setRole("employer"); setMode("signup"); setErrors({}); }}>For employers</a>
+        <a href="/" style={{ textDecoration: "none" }}>
+          <div className="w" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <img src={logo.src} alt="" style={{ height: 40, width: "auto" }} />
+            <span style={{ color: "#593C42", fontWeight: 700, fontSize: "1.4em !important" }}>Nivra</span>
           </div>
-        </div>
+        </a>
       </nav>
 
       <main className="w" style={{ maxWidth: 460, padding: "36px 20px" }}>
@@ -173,19 +213,25 @@ export default function Login({
               </div>
             );
           })}
-
-          <button type="submit" className="btn" style={{ width: "100%", marginTop: 18 }}>
-            {isLogin ? "Log in" : "Create account"}
-          </button>
+          {message && (
+  <p className="hint" role="status" aria-live="polite">
+    {message}
+  </p>
+)}
+         <button
+  type="submit"
+  className="btn"
+  style={{ width: "100%", marginTop: 18 }}
+  disabled={loading}
+>
+  {loading
+    ? "Please wait..."
+    : isLogin
+      ? "Log in"
+      : "Create account"}
+</button>
         </form>
       </main>
-
-      <footer className="foot">
-        <div className="w">
-          <p><b>Nivra</b> · Find work for a day. Build experience for tomorrow.</p>
-          <p>Prototype with sample data. Employers, jobs and students are fictional.</p>
-        </div>
-      </footer>
     </div>
   );
 }
