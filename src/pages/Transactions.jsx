@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -303,7 +302,6 @@ export default function Transactions() {
     setTags(row.tags || []);
     setReason("");
     setComments("");
-    setEvidence("");
     setError("");
   }
 
@@ -825,18 +823,15 @@ export default function Transactions() {
                       <td data-label="Job">{r.job}</td>
                       <td data-label="Paid on">{r.paidOn}</td>
                       <td data-label="Your rating"><span className="tr-rating" aria-label={`${r.rating} out of 5`}>{stars(r.rating)}</span></td>
-                      <td data-label="Reference" className="tr-ref">{r.ref}</td>
+                      <td data-label="Reference"><span className="tr-ref">{r.ref}</span></td>
                       <td data-label="Status"><span className="tr-badge paid">Paid</span></td>
-                      <td data-label="Total paid" className="tr-amount tr-r">
-                        {rupees(r.amount)}
-                        <small>{rupees(r.studentAmount)} to student + {rupees(r.fee)} fee</small>
-                      </td>
+                      <td data-label="Total paid" className="tr-r tr-amount">{rupees(r.amount)}</td>
                     </tr>
                   ))}
                   {!loading && shownHistory.length === 0 && (
                     <tr><td className="tr-empty" colSpan={7}>
-                      <strong>No transactions found</strong>
-                      <p>Paid transactions will appear here.</p>
+                      <strong>{history.length === 0 ? "No payment history" : "No students found"}</strong>
+                      <p>{history.length === 0 ? "Completed and paid gigs show up here." : "Try a different name."}</p>
                     </td></tr>
                   )}
                 </tbody>
@@ -851,131 +846,79 @@ export default function Transactions() {
       </main>
 
       {modal && (
-        <div className="tr-ov" onClick={(e) => e.target === e.currentTarget && closeModal()}>
-          <div className="tr-modal" role="dialog" aria-modal="true" aria-labelledby="tr-modal-title">
-
-            {modal.mode === "pay" && (
+        <div className="tr-ov" onClick={closeModal}>
+          <div className="tr-modal" onClick={(e) => e.stopPropagation()}>
+            {modal.mode === "verify" && (
               <>
-                <h2 id="tr-modal-title">Confirm payment</h2>
+                <h2>Verify completed gig</h2>
+                <p>Review {modal.row.name}&apos;s work for {modal.row.job}.</p>
+                
                 <dl>
-                  <dt>Student</dt><dd>{row.name}</dd>
-                  <dt>Job</dt><dd>{row.job}</dd>
-                  <dt>Worked on</dt><dd>{row.worked}</dd>
-                  <dt>Your rating</dt><dd className="tr-rating">{stars(row.rating)}</dd>
+                  <dt>Worked on</dt><dd>{modal.row.worked}</dd>
+                  <dt>Hours</dt><dd>{modal.row.hours}</dd>
+                  <dt>Amount</dt><dd>{rupees(modal.row.amount)}</dd>
                 </dl>
-                <PaymentSummary
-                  amount={row.amount}
-                  fee={row.fee}
-                  studentAmount={row.studentAmount}
+
+                <h3>Rating</h3>
+                <StarPicker value={rating} onChange={setRating} />
+
+                <h3>Review (optional)</h3>
+                <textarea
+                  placeholder="Share how the student did..."
+                  value={review}
+                  onChange={(e) => setReview(e.target.value)}
                 />
-               <p style={{ marginTop: 12 }}>
-  Pay securely through Razorpay. Your Nivra transaction will only be
-  marked as Paid after the payment is verified by our server.
-  This demo uses Razorpay Test Mode.
-</p>
+
+                <h3>Review tags</h3>
+                <div className="tr-chips">
+                  {TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      className="tr-chip"
+                      aria-pressed={tags.includes(tag)}
+                      onClick={() => toggleTag(tag)}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+
                 {error && <p className="tr-err" role="alert">{error}</p>}
+
                 <div className="tr-modal-actions">
-                  <button className="tr-btn" disabled={saving} onClick={closeModal}>Cancel</button>
-                 <button className="tr-btn pay" disabled={saving} onClick={confirmPayDue}>
-  {saving ? "Opening checkout..." : `Pay ${rupees(row.amount)} with Razorpay`}
-</button>
+                  <button type="button" className="tr-btn" disabled={saving} onClick={closeModal}>Cancel</button>
+                  <button type="button" className="tr-btn" disabled={saving} onClick={verifyPayLater}>Save &amp; Pay Later</button>
+                  <button type="button" className="tr-btn pay" disabled={saving} onClick={confirmVerifyAndPay}>Verify &amp; Pay Now</button>
                 </div>
               </>
             )}
 
-            {modal.mode === "verify" && (
+            {modal.mode === "pay" && (
               <>
-                <h2 id="tr-modal-title">Verify job completion</h2>
+                <h2>Make payment</h2>
+                <p>Pay {modal.row.name} for {modal.row.job}.</p>
+
                 <dl>
-                  <dt>Student</dt><dd>{row.name}</dd>
-                  <dt>Job</dt><dd>{row.job}</dd>
-                  <dt>Date</dt><dd>{row.worked}</dd>
-                  <dt>Working hours</dt><dd>{row.hours}</dd>
-                  <dt>Agreed payment</dt><dd>{rupees(row.amount)}</dd>
-                  <dt>Student status</dt><dd>Marked as completed</dd>
+                  <dt>Student</dt><dd>{modal.row.name}</dd>
+                  <dt>Job</dt><dd>{modal.row.job}</dd>
                 </dl>
 
-                <h3>Did the student successfully complete the job?</h3>
-                <label className={`tr-opt ${answer === "yes" ? "on" : ""}`}>
-                  <input type="radio" name="done" checked={answer === "yes"} onChange={() => { setAnswer("yes"); setError(""); }} />
-                  ✓ Yes, job completed.
-                </label>
-                <label className={`tr-opt ${answer === "no" ? "on" : ""}`}>
-                  <input type="radio" name="done" checked={answer === "no"} onChange={() => { setAnswer("no"); setError(""); }} />
-                  ✕ No, report a problem.
-                </label>
+                <h3>Payment breakdown</h3>
+                <PaymentSummary
+                  amount={modal.row.amount}
+                  fee={modal.row.fee}
+                  studentAmount={modal.row.studentAmount}
+                />
 
-                {answer === "yes" && (
-                  <>
-                    <h3>How was your experience working with {row.name.split(" ")[0]}?</h3>
-                    <StarPicker value={rating} onChange={(n) => { setRating(n); setError(""); }} />
-                    <p style={{ marginTop: 6 }}>
-                      Your rating does not change what the student receives.
-                    </p>
-                    <div className="tr-chips" role="group" aria-label="Review tags">
-                      {TAGS.map((t) => (
-                        <button key={t} type="button" className="tr-chip" aria-pressed={tags.includes(t)} onClick={() => toggleTag(t)}>{t}</button>
-                      ))}
-                    </div>
-                    <textarea
-                      aria-label="Review"
-                      placeholder="Share your experience working with this student..."
-                      value={review}
-                      onChange={(e) => setReview(e.target.value)}
-                    />
+                {error && <p className="tr-err" role="alert">{error}</p>}
 
-                    <h3>Payment breakdown</h3>
-                    <PaymentSummary
-                      amount={row.amount}
-                      fee={Math.round(row.amount * FEE_RATE) / 100}
-                      studentAmount={row.amount - Math.round(row.amount * FEE_RATE) / 100}
-                    />
-                    <p style={{ marginTop: 12 }}>
-                      Verification creates a Pending payment record. You can record payment now after transferring the amount, or do it later.
-                    </p>
-
-                    {error && <p className="tr-err" role="alert">{error}</p>}
-                    <div className="tr-modal-actions">
-                      <button className="tr-btn" disabled={saving} onClick={closeModal}>Cancel</button>
-                      <button className="tr-btn" disabled={saving} onClick={verifyPayLater}>
-                        {saving ? "Saving..." : "Verify, pay later"}
-                      </button>
-                      <button className="tr-btn pay" disabled={saving} onClick={confirmVerifyAndPay}>
-                        {saving ? "Saving..." : "Verify & continue"}
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {answer === "no" && (
-                  <>
-                    <h3>What happened?</h3>
-                    {REASONS.map((r) => (
-                      <label key={r} className={`tr-opt ${reason === r ? "on" : ""}`}>
-                        <input type="radio" name="reason" checked={reason === r} onChange={() => { setReason(r); setError(""); }} />
-                        {r}
-                      </label>
-                    ))}
-                    <label htmlFor="tr-comments" style={{ display: "block", fontSize: 14, fontWeight: 600, margin: "12px 0 6px" }}>Additional comments</label>
-                    <textarea id="tr-comments" value={comments} onChange={(e) => setComments(e.target.value)} placeholder="Add anything that helps Nivra review this." />
-                    <label htmlFor="tr-evidence" style={{ display: "block", fontSize: 14, fontWeight: 600, margin: "12px 0 6px" }}>Supporting evidence (optional)</label>
-                    <input id="tr-evidence" type="file" onChange={(e) => setEvidence(e.target.files?.[0]?.name || "")} />
-                    <p style={{ marginTop: 12 }}>
-                      Dispute submission is not connected yet. This form will not submit or store a report.
-                    </p>
-                    {error && <p className="tr-err" role="alert">{error}</p>}
-                    <div className="tr-modal-actions">
-                      <button className="tr-btn" onClick={closeModal}>Cancel</button>
-                      <button className="tr-btn danger" onClick={submitDispute}>Submit Dispute</button>
-                    </div>
-                  </>
-                )}
-
-                {!answer && (
-                  <div className="tr-modal-actions">
-                    <button className="tr-btn" onClick={closeModal}>Cancel</button>
-                  </div>
-                )}
+                <div className="tr-modal-actions">
+                  <button type="button" className="tr-btn" disabled={saving} onClick={closeModal}>Cancel</button>
+                  <button type="button" className="tr-btn pay" disabled={saving} onClick={confirmPayDue}>
+                    {saving ? "Processing..." : "Pay with Razorpay"}
+                  </button>
+                </div>
               </>
             )}
           </div>
