@@ -380,7 +380,12 @@ async function updateApplicationStatus(applicationId, status) {
                                 <section className="panel">
                   <h2>Premium matching</h2>
                   <p className="muted">Ranked candidates with match reasons.</p>
-                  <button className="button button-small" onClick={() => navigate("Plans")}>View plans</button>
+                  <button
+  className="button button-small"
+  onClick={() => window.location.assign("/pricing")}
+>
+  View plans
+</button>
                 </section>
               </aside>
             </div>
